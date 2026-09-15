@@ -10,7 +10,7 @@ Shows OBS Studio recording status as a HUD indicator in Minecraft (Fabric).
 私が一番助かるのでね()
 そんなところです！ありがとうございます！
 
-- 録画中: 赤い丸 + `REC`（点滅なし）
+- 録画中: 赤い丸 + `REC`
 - 一時停止: 橙色の丸 + `PAUSED`
 - 停止 / 未接続: 非表示
 
