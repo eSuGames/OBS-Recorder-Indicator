@@ -25,6 +25,7 @@ Idle / disconnected: hidden
 3. 認証はオフ推奨（使う場合は下の `obsPassword` へ）
 4. ポートはデフォルト **4455** のままで OK
 
+EN
 1. **Tools → WebSocket Server Settings**  
 2. Enable **WebSocket server**  
 3. Auth off is simplest (or set `obsPassword` below)  
