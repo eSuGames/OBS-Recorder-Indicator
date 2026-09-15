@@ -1,56 +1,92 @@
 # OBS Rec Indicator
 
-OBS Studio の録画状態を Minecraft 26.2 (Fabric) に表示する HUD インジケーター Mod です。
+OBS の録画状態を Minecraft に表示する Fabric Mod です。
 
-- 録画中 → 赤い丸 + `REC`（点滅なし）
-- 一時停止 → 橙色 + `PAUSED`
-- 位置は画面中央が 0,0（右+ / 下+）
-- 必須依存は Fabric API のみ。OneConfig は任意
+Shows OBS Studio recording status as a HUD indicator in Minecraft (Fabric).
 
-## ライセンス
+- 録画中: 赤い丸 + `REC`（点滅なし）
+- 一時停止: 橙色の丸 + `PAUSED`
+- 停止 / 未接続: 非表示
+
+Recording: red circle + `REC`  
+Paused: orange + `PAUSED`  
+Idle / disconnected: hidden
+
+## OBS の設定 / OBS setup
+
+1. **ツール → WebSocket Server Settings**
+2. **WebSocket server を有効にする**
+3. 認証はオフ推奨（使う場合は下の `obsPassword` へ）
+4. ポートはデフォルト **4455** のままで OK
+
+1. **Tools → WebSocket Server Settings**  
+2. Enable **WebSocket server**  
+3. Auth off is simplest (or set `obsPassword` below)  
+4. Default port **4455** is fine
+
+## 必要なもの / Requirements
+
+- Minecraft 26.2
+- [Fabric Loader](https://fabricmc.net/use/installer/) 0.19.5+
+- [Fabric API](https://modrinth.com/mod/fabric-api)（26.2 向け）
+- OBS Studio（WebSocket 5.x、OBS 28+）
+
+## インストール / Install
+
+1. Fabric Loader と Fabric API を導入
+2. `obs-rec-indicator-r1.0.0.jar` を `mods` に入れる
+3. （任意）OneConfig を入れると設定 UI が使える
+
+1. Install Fabric Loader and Fabric API  
+2. Put `obs-rec-indicator-r1.0.0.jar` in `mods`  
+3. (Optional) Install OneConfig for a config UI
+
+## コマンド / Commands
+
+| コマンド / Command | 説明 / Description |
+|--------------------|--------------------|
+| `/obsindicator config` | 設定を開く / Open settings |
+| `/obsindicator toggle` | 表示 ON/OFF / Toggle indicator |
+| `/obsindicator status` | 接続状態 / Connection status |
+| `/obsindicator reconnect` | OBS 再接続 / Reconnect to OBS |
+
+OneConfig を入れていない場合は次も使えます。
+
+Without OneConfig, these are also available:
+
+- `/obsindicator textonly` — 文字のみ / Text only  
+- `/obsindicator position <x> <y>` — 位置 / Position  
+- `/obsindicator position reset` — 位置リセット / Reset position  
+
+## 位置調整 / Position
+
+画面中央が (0,0) です。右 +X、下 +Y。
+
+Origin is the screen center. +X right, +Y down.
+
+- 内蔵 Config、または OneConfig の **Position editor** から、画面全体のプレビューでドラッグ
+- サイズ: `-0.5` / `-0.25` / `1.00x` / `+0.25` / `+0.5`
+
+Drag on the full-screen preview from the built-in config, or from OneConfig’s **Position editor**.
+
+## 設定ファイル / Config
+
+`config/obs_rec_indicator.json`（初回起動時に生成）
+
+| キー / Key | 説明 / Description |
+|------------|--------------------|
+| `enabled` | インジケーター ON/OFF |
+| `positionX` / `positionY` | 位置（中央原点） |
+| `scale` | サイズ |
+| `showCircle` | 丸の表示（false で文字のみ） |
+| `showText` | 文字の表示 |
+| `showBackground` | 背景 |
+| `showShadow` | 影 |
+| `recordingText` / `pausedText` | 表示文字 |
+| `recordingColor` / `pausedColor` | 色（例 `#E53935`） |
+| `obsHost` / `obsPort` | OBS WebSocket |
+| `obsPassword` | パスワード（認証時） |
+
+## ライセンス / License
 
 LGPL-3.0-only
-
-## ビルド
-
-```powershell
-$env:JAVA_HOME = "C:\Users\<you>\.jdks\temurin-25.0.4"
-.\gradlew.bat build
-```
-
-成果物: `build/libs/obs-rec-indicator-1.5.0.jar`
-
-## コマンド
-
-### OneConfig あり
-
-| コマンド | 動作 |
-|----------|------|
-| `/obsindicator config` | OneConfig の本 Mod 設定画面 |
-| `/obsindicator status` | 接続・表示状態 |
-
-HUD 位置は OneConfig の HUD エディターでドラッグして調整します。
-
-### OneConfig なし
-
-| コマンド | 動作 |
-|----------|------|
-| `/obsindicator config` | 組み込み設定画面（画面全体でドラッグ可能） |
-| `/obsindicator status` | 接続・表示状態 |
-| `/obsindicator toggle` | インジケーター ON/OFF |
-| `/obsindicator textonly` | 文字のみ ON/OFF |
-| `/obsindicator position <x> <y>` | 位置設定 |
-| `/obsindicator position reset` | 位置リセット |
-| `/obsindicator reconnect` | OBS 再接続 |
-
-## OBS
-
-ツール → WebSocket Server Settings → 有効化（ポート 4455）
-
-## 依存
-
-| 種類 | Mod |
-|------|-----|
-| 必須 | Fabric API |
-| 任意 | OneConfig 1.1.x |
-| 不使用 | YACL |
