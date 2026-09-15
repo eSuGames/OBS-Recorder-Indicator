@@ -21,15 +21,17 @@ Idle / disconnected: hidden
 ## OBS の設定 / OBS setup
 
 1. **ツール → WebSocket サーバー設定**
-2. **WebSocket server を有効にする**を有効にする
+2. **WebSocketサーバーを有効にする**を有効にする
 3. **認証を有効にする**はオフ推奨（使う場合は下の `obsPassword` へ）
 4. ポートはデフォルト **4455** のままで OK
+5. 適用
 
 EN
 1. **Tools → WebSocket Server Settings**  
 2. Enable **WebSocket server**  
 3. Auth off is simplest (or set `obsPassword` below)  
 4. Default port **4455** is fine
+5. OK
 
 ## 必要なもの / Requirements
 
