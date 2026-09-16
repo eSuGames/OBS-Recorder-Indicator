@@ -4,7 +4,9 @@ OBS の録画状態を Minecraft に表示する Fabric Mod です。
 
 Shows OBS Studio recording status as a HUD indicator in Minecraft (Fabric).
 
-みなさんこんにちは、そしてはじめまして。えすGamesと申します。まず、このModはMiMoが作成し、私が動作テストをするという形で完成したものです。
+みなさんこんにちは、そしてはじめまして。[えすGames](https://www.youtube.com/channel/UClnmJsxYKdl2dHwHsqsZVOg)と申します。
+
+まず、このModはMiMoが作成し、私が動作テストをするという形で完成したものです。
 
 また、こちらのREADMEもこの文以外はMiMoに書かせているため、不十分なものがあるかもしれませんし、もちろんコードもMiMoが書いたものなので汚いところがあるかもしれません。
 
