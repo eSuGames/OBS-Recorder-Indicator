@@ -38,7 +38,7 @@ EN
 
 - Minecraft
 - [Fabric Loader](https://fabricmc.net/use/installer/)
-- [Fabric API](https://modrinth.com/mod/fabric-api)\
+- [Fabric API](https://modrinth.com/mod/fabric-api)
 - OBS Studio
 ※バージョン要件は時と場合によります。
 Version requirements may vary depending on the situation. 
