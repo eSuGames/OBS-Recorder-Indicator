@@ -42,15 +42,6 @@ EN
 - OBS Studio
 ※バージョン要件は時と場合によります。
 Version requirements may vary depending on the situation. 
-## インストール / Install
-
-1. Fabric Loader と Fabric API を導入
-2. `obs-rec-indicator-r1.0.0.jar` を `mods` に入れる
-3. （任意）OneConfig を入れると設定 UI が使える
-
-1. Install Fabric Loader and Fabric API  
-2. Put `obs-rec-indicator-r1.0.0.jar` in `mods`  
-3. (Optional) Install OneConfig for a config UI
 
 ## コマンド / Commands
 
