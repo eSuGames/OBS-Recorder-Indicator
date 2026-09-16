@@ -36,11 +36,12 @@ EN
 
 ## 必要なもの / Requirements
 
-- Minecraft 26.2
-- [Fabric Loader](https://fabricmc.net/use/installer/) 0.19.5+
-- [Fabric API](https://modrinth.com/mod/fabric-api)（26.2 向け）
-- OBS Studio（WebSocket 5.x、OBS 28+）
-
+- Minecraft
+- [Fabric Loader](https://fabricmc.net/use/installer/)
+- [Fabric API](https://modrinth.com/mod/fabric-api)\
+- OBS Studio
+※バージョン要件は時と場合によります。
+Version requirements may vary depending on the situation. 
 ## インストール / Install
 
 1. Fabric Loader と Fabric API を導入
