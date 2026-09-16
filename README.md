@@ -1,4 +1,4 @@
-# OBS Rec Indicator
+# OBS Recorder Indicator
 
 OBS の録画状態を Minecraft に表示する Fabric Mod です。
 
