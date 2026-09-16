@@ -4,6 +4,7 @@ import com.obsindicator.client.config.ConfigScreenOpener;
 import com.obsindicator.client.config.OneConfigSupport;
 import com.obsindicator.client.hud.RecordingHudOverlay;
 import com.obsindicator.config.ConfigManager;
+import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -12,7 +13,6 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-import org.lwjgl.glfw.GLFW;
 
 /**
  * Commands: config / status / toggle / reconnect always. textonly / position only without OneConfig.
@@ -32,14 +32,17 @@ public final class ClientBootstrap {
 			Identifier.fromNamespaceAndPath(ObsRecIndicatorClient.MOD_ID, "main")
 		);
 
+		int unbound = InputConstants.UNKNOWN.getValue();
 		openConfigKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
 			"key.obs_rec_indicator.open_config",
-			GLFW.GLFW_KEY_UNKNOWN,
+			InputConstants.Type.KEYBOARD,
+			unbound,
 			category
 		));
 		toggleIndicatorKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
 			"key.obs_rec_indicator.toggle_indicator",
-			GLFW.GLFW_KEY_UNKNOWN,
+			InputConstants.Type.KEYBOARD,
+			unbound,
 			category
 		));
 

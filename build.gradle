@@ -39,10 +39,10 @@ dependencies {
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 
 	// Optional — compileOnly so the jar never requires OneConfig at runtime.
-	// Extracted API modules from OneConfig 1.1.17 (26.2 Fabric). Not bundled into the mod jar.
+	// Extracted API modules from OneConfig 1.2.0 (26.3 Fabric). Not bundled into the mod jar.
 	compileOnly files(
-		"libs/oneconfig-config-1.1.17.jar",
-		"libs/oneconfig-config-impl-1.1.17.jar",
+		"libs/oneconfig-config-1.2.0.jar",
+		"libs/oneconfig-config-impl-1.2.0.jar",
 		"libs/kotlin-stdlib-2.1.0.jar"
 	)
 }

@@ -134,11 +134,16 @@ public final class PositionEditorScreen extends Screen {
 			ConfigManager.get().positionY = draft.positionY;
 			ConfigManager.get().scale = draft.scale;
 			ConfigManager.save();
-			ObsIndicatorOneConfig one = ObsIndicatorOneConfig.instance();
-			if (one != null) {
-				one.positionX = draft.positionX;
-				one.positionY = draft.positionY;
-				one.scale = draft.scale;
+			// Reflective sync — do not reference OneConfig types here (absent at runtime).
+			try {
+				Class<?> clazz = Class.forName("com.obsindicator.client.config.ObsIndicatorOneConfig");
+				Object one = clazz.getMethod("instance").invoke(null);
+				if (one != null) {
+					clazz.getField("positionX").setInt(one, draft.positionX);
+					clazz.getField("positionY").setInt(one, draft.positionY);
+					clazz.getField("scale").setFloat(one, draft.scale);
+				}
+			} catch (Throwable ignored) {
 			}
 			this.onClose();
 		}).bounds(this.width / 2 + 5, y, w, 20).build());
