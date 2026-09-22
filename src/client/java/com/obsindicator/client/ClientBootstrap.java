@@ -71,6 +71,10 @@ public final class ClientBootstrap {
 	private static void registerCommands() {
 		ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
 			var root = ClientCommands.literal("obsindicator")
+				.executes(ctx -> {
+					ConfigScreenOpener.open();
+					return 1;
+				})
 				.then(ClientCommands.literal("config")
 					.executes(ctx -> {
 						ConfigScreenOpener.open();
