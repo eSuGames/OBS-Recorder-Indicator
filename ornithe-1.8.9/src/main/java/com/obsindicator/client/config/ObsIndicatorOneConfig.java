@@ -49,13 +49,11 @@ public final class ObsIndicatorOneConfig extends Config {
 	@Slider(title = "Indicator size", min = 0.25f, max = 4.0f, step = 0.05f, category = "Position")
 	public float scale = 1.0f;
 
-	@Button(title = "Position editor", text = "Open", category = "Position")
-	public void openPositionEditor() {
+	@Button(title = "Reset position", text = "Reset", category = "Position")
+	public void resetPosition() {
+		positionX = ModConfig.DEFAULT_POS_X;
+		positionY = ModConfig.DEFAULT_POS_Y;
 		applyToRuntime();
-		net.minecraft.client.MinecraftClient client = net.minecraft.client.MinecraftClient.getInstance();
-		if (client != null) {
-			client.setScreen(new PositionEditorScreen(client.currentScreen));
-		}
 	}
 
 	@Text(title = "OBS host", category = "OBS")
@@ -87,22 +85,20 @@ public final class ObsIndicatorOneConfig extends Config {
 	private static boolean pendingReloadFromRuntime;
 
 	public ObsIndicatorOneConfig() {
-		super("obs-rec-indicator", "OBS Rec Indicator", Category.UTILITY);
+		// 3-arg: (modId, displayName, Category). Must match fabric.mod.json id.
+		super("obs_rec_indicator", "OBS Rec Indicator", Category.UTILITY);
 		loadFromRuntime();
 	}
 
 	public static void registerIfPresent() {
-		if (!FabricLoader.getInstance().isModLoaded("oneconfig")) {
-			return;
-		}
 		if (instance == null) {
 			instance = new ObsIndicatorOneConfig();
 			try {
 				org.polyfrost.oneconfig.api.config.v1.ConfigManager.submitForInitialization(instance);
+				LOGGER.info("OneConfig config registered for OBS Rec Indicator");
 			} catch (Throwable t) {
-				LOGGER.debug("submitForInitialization: {}", t.toString());
+				LOGGER.warn("OneConfig registration failed: {}", t.toString());
 			}
-			LOGGER.info("OneConfig config registered for OBS Rec Indicator");
 			pendingReloadFromRuntime = true;
 		}
 	}
@@ -197,4 +193,3 @@ public final class ObsIndicatorOneConfig extends Config {
 		applyToRuntime();
 	}
 }
-

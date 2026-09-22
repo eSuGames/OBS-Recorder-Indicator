@@ -23,9 +23,7 @@
 	"depends": {
 		"fabricloader": ">=0.12.0",
 		"minecraft": "1.8.9",
-		"java": ">=21"
-	},
-	"recommends": {
-		"oneconfig": "*"
+		"java": ">=21",
+		"oneconfigv1": "*"
 	}
 }

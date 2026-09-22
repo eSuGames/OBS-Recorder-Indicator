@@ -1,12 +1,10 @@
 package com.obsindicator.client.hud;
 
 import com.obsindicator.RecordState;
+import com.obsindicator.client.McReflect;
 import com.obsindicator.client.ObsRecIndicatorClient;
 import com.obsindicator.config.ConfigManager;
 import com.obsindicator.config.ModConfig;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawableHelper;
 
 /** HUD drawing for 1.8.9. Center origin (0,0). Left edge of indicator = positionX. */
 public final class RecordingHudOverlay {
@@ -21,13 +19,13 @@ public final class RecordingHudOverlay {
 		if (!config.enabled) {
 			return;
 		}
+		Object mc = McReflect.minecraft();
+		if (mc == null) {
+			return;
+		}
 		var client = ObsRecIndicatorClient.obsClient();
 		RecordState state = client == null ? RecordState.IDLE : client.currentRecordState();
 		if (!state.isIndicatorVisible()) {
-			return;
-		}
-		MinecraftClient mc = MinecraftClient.getInstance();
-		if (mc == null) {
 			return;
 		}
 		int color = state == RecordState.PAUSED ? config.pausedColorArgb() : config.recordingColorArgb();
@@ -35,11 +33,11 @@ public final class RecordingHudOverlay {
 		if (label == null) {
 			label = "";
 		}
-		drawIndicator(mc, config, mc.width, mc.height, color, label, 0, 0);
+		drawIndicator(mc, config, McReflect.scaledWidth(), McReflect.scaledHeight(), color, label, 0, 0);
 	}
 
 	public static void drawIndicator(
-		MinecraftClient mc,
+		Object mc,
 		ModConfig config,
 		int screenWidth,
 		int screenHeight,
@@ -52,9 +50,12 @@ public final class RecordingHudOverlay {
 		boolean showCircle = config.showCircle;
 		boolean showText = config.showText && label != null && !label.isEmpty();
 
-		TextRenderer font = mc.textRenderer;
-		int fontH = font.fontHeight;
-		int fontW = showText ? font.getStringWidth(label) : 0;
+		Object font = McReflect.font();
+		int fontH = McReflect.fontHeight(font);
+		if (fontH <= 0) {
+			fontH = 9;
+		}
+		int fontW = showText ? McReflect.stringWidth(font, label) : 0;
 		int textWidth = showText ? Math.max(1, Math.round(fontW * scale)) : 0;
 		int textHeight = showText ? Math.max(1, Math.round(fontH * scale)) : 0;
 		int radius = showCircle ? Math.max(1, Math.round(config.circleRadius * scale)) : 0;
@@ -72,7 +73,7 @@ public final class RecordingHudOverlay {
 		int midY = config.originY(screenHeight, contentHeight) + translateY;
 
 		if (config.showBackground) {
-			DrawableHelper.fill(
+			McReflect.fill(
 				originX - padding, midY - contentHeight / 2 - padding,
 				originX + contentWidth + padding, midY + contentHeight / 2 + padding,
 				0x66000000
@@ -88,11 +89,7 @@ public final class RecordingHudOverlay {
 		if (showText) {
 			int textColor = showCircle ? 0xFFFFFFFF : color;
 			int textY = midY - fontH / 2 - 1;
-			if (config.showShadow) {
-				font.drawWithShadow(label, textX, textY, textColor);
-			} else {
-				font.draw(label, textX, textY, textColor);
-			}
+			McReflect.drawString(font, label, textX, textY, textColor, config.showShadow);
 		}
 	}
 
@@ -118,7 +115,7 @@ public final class RecordingHudOverlay {
 				if (a <= 0) {
 					continue;
 				}
-				DrawableHelper.fill(cx + dx, cy + dy, cx + dx + 1, cy + dy + 1, (a << 24) | rgb);
+				McReflect.fill(cx + dx, cy + dy, cx + dx + 1, cy + dy + 1, (a << 24) | rgb);
 			}
 		}
 	}

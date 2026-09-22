@@ -38,6 +38,7 @@ dependencies {
 	compileOnly files(
 		"libs/oneconfig-config-1.2.4.jar",
 		"libs/oneconfig-config-impl-1.2.4.jar",
+		"libs/asm-9.10.1.jar",
 		"libs/kotlin-stdlib-2.1.0.jar"
 	)
 }

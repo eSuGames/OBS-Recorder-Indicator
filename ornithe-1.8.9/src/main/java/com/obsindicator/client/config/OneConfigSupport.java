@@ -25,15 +25,22 @@ public final class OneConfigSupport {
 	}
 
 	public static void registerIfPresent() {
-		if (!isPresent() || configRegistered) {
+		if (configRegistered) {
 			return;
 		}
 		try {
 			Class<?> clazz = Class.forName("com.obsindicator.client.config.ObsIndicatorOneConfig");
 			clazz.getMethod("registerIfPresent").invoke(null);
 			configRegistered = true;
+			LOGGER.info("OneConfig support activated");
 		} catch (Throwable t) {
-			LOGGER.debug("OneConfig config register skipped: {}", t.toString());
+			LOGGER.warn("OneConfig config register skipped: {}", t.toString());
+		}
+		try {
+			Class<?> cmd = Class.forName("com.obsindicator.client.command.ObsIndicatorCommand");
+			cmd.getMethod("register").invoke(null);
+		} catch (Throwable t) {
+			LOGGER.warn("Client command register skipped: {}", t.toString());
 		}
 	}
 

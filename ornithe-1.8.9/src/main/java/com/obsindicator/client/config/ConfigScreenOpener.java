@@ -1,13 +1,13 @@
 package com.obsindicator.client.config;
 
-import com.obsindicator.config.ConfigManager;
-import net.minecraft.client.MinecraftClient;
+import com.obsindicator.client.McReflect;
+import com.obsindicator.client.ObsRecIndicatorClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class ConfigScreenOpener {
 	private static final Logger LOGGER = LoggerFactory.getLogger("obs_rec_indicator");
-	private static final String MOD_CONFIG_ID = "obs-rec-indicator";
+	private static final String MOD_CONFIG_ID = "obs_rec_indicator";
 
 	private ConfigScreenOpener() {
 	}
@@ -17,31 +17,27 @@ public final class ConfigScreenOpener {
 	}
 
 	public static void open() {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client == null) {
-			return;
-		}
 		OneConfigSupport.registerIfPresent();
 		if (OneConfigSupport.isPresent() && tryOpenOneConfigModPage()) {
 			return;
 		}
 		try {
-			client.setScreen(new BuiltinConfigScreen(client.currentScreen));
+			Class<?> screenCl = Class.forName("com.obsindicator.client.config.BuiltinConfigScreen");
+			Object parent = McReflect.currentScreen();
+			Object screen = screenCl.getConstructor(Class.forName("net.minecraft.client.gui.screen.Screen"))
+				.newInstance(parent);
+			// fall back to any GuiScreen-typed ctor
+			McReflect.openScreen(screen);
 		} catch (Throwable t) {
-			LOGGER.error("Failed to open builtin config screen", t);
+			LOGGER.debug("builtin config screen unavailable: {}", t.toString());
+			ObsRecIndicatorClient.feedback("Config UI unavailable (Ornithe remap). Use /obsindicator toggle|status|position");
 		}
 	}
 
 	public static void openPositionEditor() {
-		MinecraftClient client = MinecraftClient.getInstance();
-		if (client == null) {
-			return;
-		}
-		try {
-			client.setScreen(new PositionEditorScreen(client.currentScreen));
-		} catch (Throwable t) {
-			LOGGER.error("Failed to open position editor", t);
-		}
+		com.obsindicator.config.ConfigManager.get().resetPosition();
+		com.obsindicator.config.ConfigManager.save();
+		ObsRecIndicatorClient.feedback("Position reset");
 	}
 
 	private static boolean tryOpenOneConfigModPage() {
