@@ -1,9 +1,9 @@
-package com.obsindicator.client.hud;
+package com.esugames.obsindicator.client.hud;
 
-import com.obsindicator.RecordState;
-import com.obsindicator.client.ObsRecIndicatorClient;
-import com.obsindicator.config.ConfigManager;
-import com.obsindicator.config.ModConfig;
+import com.esugames.obsindicator.RecordState;
+import com.esugames.obsindicator.client.ObsRecIndicatorClient;
+import com.esugames.obsindicator.config.ConfigManager;
+import com.esugames.obsindicator.config.ModConfig;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.client.DeltaTracker;

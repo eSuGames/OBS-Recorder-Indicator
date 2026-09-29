@@ -1,9 +1,9 @@
-package com.obsindicator.client;
+package com.esugames.obsindicator.client;
 
-import com.obsindicator.client.config.OneConfigSupport;
-import com.obsindicator.config.ConfigManager;
-import com.obsindicator.config.ModConfig;
-import com.obsindicator.obs.ObsWebSocketClient;
+import com.esugames.obsindicator.client.config.OneConfigSupport;
+import com.esugames.obsindicator.config.ConfigManager;
+import com.esugames.obsindicator.config.ModConfig;
+import com.esugames.obsindicator.obs.ObsWebSocketClient;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import org.slf4j.Logger;

@@ -1,4 +1,4 @@
-package com.obsindicator.client.config;
+package com.esugames.obsindicator.client.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +32,7 @@ public final class OneConfigSupport {
 			return;
 		}
 		try {
-			Class<?> clazz = Class.forName("com.obsindicator.client.config.ObsIndicatorOneConfig");
+			Class<?> clazz = Class.forName("com.esugames.obsindicator.client.config.ObsIndicatorOneConfig");
 			clazz.getMethod("registerIfPresent").invoke(null);
 			configRegistered = true;
 		} catch (Throwable t) {
@@ -45,7 +45,7 @@ public final class OneConfigSupport {
 			return;
 		}
 		try {
-			Class<?> clazz = Class.forName("com.obsindicator.client.config.ObsIndicatorOneConfig");
+			Class<?> clazz = Class.forName("com.esugames.obsindicator.client.config.ObsIndicatorOneConfig");
 			clazz.getMethod("syncFromOneConfigIfChanged").invoke(null);
 		} catch (Throwable ignored) {
 		}

@@ -1,8 +1,8 @@
-package com.obsindicator.client.config;
+package com.esugames.obsindicator.client.config;
 
-import com.obsindicator.client.hud.RecordingHudOverlay;
-import com.obsindicator.config.ConfigManager;
-import com.obsindicator.config.ModConfig;
+import com.esugames.obsindicator.client.hud.RecordingHudOverlay;
+import com.esugames.obsindicator.config.ConfigManager;
+import com.esugames.obsindicator.config.ModConfig;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -136,7 +136,7 @@ public final class PositionEditorScreen extends Screen {
 			ConfigManager.save();
 			// Reflective sync — do not reference OneConfig types here (absent at runtime).
 			try {
-				Class<?> clazz = Class.forName("com.obsindicator.client.config.ObsIndicatorOneConfig");
+				Class<?> clazz = Class.forName("com.esugames.obsindicator.client.config.ObsIndicatorOneConfig");
 				Object one = clazz.getMethod("instance").invoke(null);
 				if (one != null) {
 					clazz.getField("positionX").setInt(one, draft.positionX);

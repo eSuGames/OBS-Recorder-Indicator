@@ -1,9 +1,9 @@
-package com.obsindicator.client;
+package com.esugames.obsindicator.client;
 
-import com.obsindicator.client.config.ConfigScreenOpener;
-import com.obsindicator.client.config.OneConfigSupport;
-import com.obsindicator.client.hud.RecordingHudOverlay;
-import com.obsindicator.config.ConfigManager;
+import com.esugames.obsindicator.client.config.ConfigScreenOpener;
+import com.esugames.obsindicator.client.config.OneConfigSupport;
+import com.esugames.obsindicator.client.hud.RecordingHudOverlay;
+import com.esugames.obsindicator.config.ConfigManager;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;

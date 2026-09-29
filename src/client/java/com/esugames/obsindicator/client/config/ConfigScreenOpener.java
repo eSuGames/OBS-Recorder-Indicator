@@ -1,4 +1,4 @@
-package com.obsindicator.client.config;
+package com.esugames.obsindicator.client.config;
 
 import net.minecraft.client.Minecraft;
 import org.slf4j.Logger;

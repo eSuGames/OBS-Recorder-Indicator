@@ -1,4 +1,4 @@
-package com.obsindicator.config;
+package com.esugames.obsindicator.config;
 
 /**
  * Mutable runtime configuration.

@@ -1,6 +1,6 @@
-package com.obsindicator.event;
+package com.esugames.obsindicator.event;
 
-import com.obsindicator.RecordState;
+import com.esugames.obsindicator.RecordState;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
 
