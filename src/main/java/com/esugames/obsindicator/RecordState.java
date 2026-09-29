@@ -1,4 +1,4 @@
-package com.obsindicator;
+package com.esugames.obsindicator;
 
 /**
  * Recording output state mirrored from OBS WebSocket.

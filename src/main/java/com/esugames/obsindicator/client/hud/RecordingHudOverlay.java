@@ -1,10 +1,10 @@
-package com.obsindicator.client.hud;
+package com.esugames.obsindicator.client.hud;
 
-import com.obsindicator.RecordState;
-import com.obsindicator.client.McReflect;
-import com.obsindicator.client.ObsRecIndicatorClient;
-import com.obsindicator.config.ConfigManager;
-import com.obsindicator.config.ModConfig;
+import com.esugames.obsindicator.RecordState;
+import com.esugames.obsindicator.client.McReflect;
+import com.esugames.obsindicator.client.ObsRecIndicatorClient;
+import com.esugames.obsindicator.config.ConfigManager;
+import com.esugames.obsindicator.config.ModConfig;
 
 /** HUD drawing for 1.8.9. Center origin (0,0). Left edge of indicator = positionX. */
 public final class RecordingHudOverlay {

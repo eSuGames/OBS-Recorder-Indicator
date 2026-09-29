@@ -1,7 +1,7 @@
-package com.obsindicator.client.config;
+package com.esugames.obsindicator.client.config;
 
-import com.obsindicator.config.ConfigManager;
-import com.obsindicator.config.ModConfig;
+import com.esugames.obsindicator.config.ConfigManager;
+import com.esugames.obsindicator.config.ModConfig;
 import net.fabricmc.loader.api.FabricLoader;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Button;
@@ -74,7 +74,7 @@ public final class ObsIndicatorOneConfig extends Config {
 	@Button(title = "Reconnect OBS", text = "Reconnect", category = "OBS")
 	public void reconnectObs() {
 		applyToRuntime();
-		var obs = com.obsindicator.client.ObsRecIndicatorClient.obsClient();
+		var obs = com.esugames.obsindicator.client.ObsRecIndicatorClient.obsClient();
 		if (obs != null) {
 			obs.applyConnectionSettingsChanged();
 		}

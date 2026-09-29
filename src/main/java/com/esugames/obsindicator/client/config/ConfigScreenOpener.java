@@ -1,7 +1,7 @@
-package com.obsindicator.client.config;
+package com.esugames.obsindicator.client.config;
 
-import com.obsindicator.client.McReflect;
-import com.obsindicator.client.ObsRecIndicatorClient;
+import com.esugames.obsindicator.client.McReflect;
+import com.esugames.obsindicator.client.ObsRecIndicatorClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +22,7 @@ public final class ConfigScreenOpener {
 			return;
 		}
 		try {
-			Class<?> screenCl = Class.forName("com.obsindicator.client.config.BuiltinConfigScreen");
+			Class<?> screenCl = Class.forName("com.esugames.obsindicator.client.config.BuiltinConfigScreen");
 			Object parent = McReflect.currentScreen();
 			Object screen = screenCl.getConstructor(Class.forName("net.minecraft.client.gui.screen.Screen"))
 				.newInstance(parent);
@@ -35,8 +35,8 @@ public final class ConfigScreenOpener {
 	}
 
 	public static void openPositionEditor() {
-		com.obsindicator.config.ConfigManager.get().resetPosition();
-		com.obsindicator.config.ConfigManager.save();
+		com.esugames.obsindicator.config.ConfigManager.get().resetPosition();
+		com.esugames.obsindicator.config.ConfigManager.save();
 		ObsRecIndicatorClient.feedback("Position reset");
 	}
 

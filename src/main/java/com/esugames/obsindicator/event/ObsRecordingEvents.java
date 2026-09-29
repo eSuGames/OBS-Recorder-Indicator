@@ -1,6 +1,6 @@
-package com.obsindicator.event;
+package com.esugames.obsindicator.event;
 
-import com.obsindicator.RecordState;
+import com.esugames.obsindicator.RecordState;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;

@@ -1,4 +1,4 @@
-package com.obsindicator.client.config;
+package com.esugames.obsindicator.client.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +29,7 @@ public final class OneConfigSupport {
 			return;
 		}
 		try {
-			Class<?> clazz = Class.forName("com.obsindicator.client.config.ObsIndicatorOneConfig");
+			Class<?> clazz = Class.forName("com.esugames.obsindicator.client.config.ObsIndicatorOneConfig");
 			clazz.getMethod("registerIfPresent").invoke(null);
 			configRegistered = true;
 			LOGGER.info("OneConfig support activated");
@@ -37,7 +37,7 @@ public final class OneConfigSupport {
 			LOGGER.warn("OneConfig config register skipped: {}", t.toString());
 		}
 		try {
-			Class<?> cmd = Class.forName("com.obsindicator.client.command.ObsIndicatorCommand");
+			Class<?> cmd = Class.forName("com.esugames.obsindicator.client.command.ObsIndicatorCommand");
 			cmd.getMethod("register").invoke(null);
 		} catch (Throwable t) {
 			LOGGER.warn("Client command register skipped: {}", t.toString());
@@ -49,7 +49,7 @@ public final class OneConfigSupport {
 			return;
 		}
 		try {
-			Class<?> clazz = Class.forName("com.obsindicator.client.config.ObsIndicatorOneConfig");
+			Class<?> clazz = Class.forName("com.esugames.obsindicator.client.config.ObsIndicatorOneConfig");
 			clazz.getMethod("syncFromOneConfigIfChanged").invoke(null);
 		} catch (Throwable ignored) {
 		}

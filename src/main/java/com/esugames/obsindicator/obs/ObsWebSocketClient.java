@@ -1,12 +1,12 @@
-package com.obsindicator.obs;
+package com.esugames.obsindicator.obs;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.obsindicator.RecordState;
-import com.obsindicator.config.ConfigManager;
-import com.obsindicator.config.ModConfig;
-import com.obsindicator.event.ObsRecordingEvents;
+import com.esugames.obsindicator.RecordState;
+import com.esugames.obsindicator.config.ConfigManager;
+import com.esugames.obsindicator.config.ModConfig;
+import com.esugames.obsindicator.event.ObsRecordingEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

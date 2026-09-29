@@ -1,4 +1,4 @@
-package com.obsindicator.client;
+package com.esugames.obsindicator.client;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

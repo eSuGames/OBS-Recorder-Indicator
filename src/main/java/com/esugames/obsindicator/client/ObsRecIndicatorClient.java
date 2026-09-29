@@ -1,9 +1,9 @@
-package com.obsindicator.client;
+package com.esugames.obsindicator.client;
 
-import com.obsindicator.client.config.OneConfigSupport;
-import com.obsindicator.client.hud.RecordingHudOverlay;
-import com.obsindicator.config.ConfigManager;
-import com.obsindicator.obs.ObsWebSocketClient;
+import com.esugames.obsindicator.client.config.OneConfigSupport;
+import com.esugames.obsindicator.client.hud.RecordingHudOverlay;
+import com.esugames.obsindicator.config.ConfigManager;
+import com.esugames.obsindicator.obs.ObsWebSocketClient;
 import net.fabricmc.api.ClientModInitializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +48,7 @@ public final class ObsRecIndicatorClient implements ClientModInitializer {
 		}
 	}
 
-	private static String connectionKey(com.obsindicator.config.ModConfig c) {
+	private static String connectionKey(com.esugames.obsindicator.config.ModConfig c) {
 		return c.obsHost + "|" + c.obsPort + "|" + c.obsPassword + "|" + c.obsUseTls
 			+ "|" + c.reconnectIntervalSeconds + "|" + c.connectTimeoutMs;
 	}

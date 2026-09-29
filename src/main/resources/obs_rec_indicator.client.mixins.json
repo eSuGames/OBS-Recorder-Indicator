@@ -1,6 +1,6 @@
 {
 	"required": true,
-	"package": "com.obsindicator.mixin.client",
+	"package": "com.esugames.obsindicator.mixin.client",
 	"compatibilityLevel": "JAVA_8",
 	"client": [
 		"ClientMixins$InGameHudMixin",

@@ -1,8 +1,8 @@
-package com.obsindicator.client;
+package com.esugames.obsindicator.client;
 
-import com.obsindicator.client.config.ConfigScreenOpener;
-import com.obsindicator.client.config.OneConfigSupport;
-import com.obsindicator.config.ConfigManager;
+import com.esugames.obsindicator.client.config.ConfigScreenOpener;
+import com.esugames.obsindicator.client.config.OneConfigSupport;
+import com.esugames.obsindicator.config.ConfigManager;
 
 /** Chat / client-command handlers for 1.8.9. */
 public final class ClientBootstrap {

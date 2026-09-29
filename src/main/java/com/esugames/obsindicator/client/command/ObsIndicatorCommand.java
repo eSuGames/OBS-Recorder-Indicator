@@ -1,8 +1,8 @@
-package com.obsindicator.client.command;
+package com.esugames.obsindicator.client.command;
 
-import com.obsindicator.client.ClientBootstrap;
-import com.obsindicator.client.ObsRecIndicatorClient;
-import com.obsindicator.client.config.ConfigScreenOpener;
+import com.esugames.obsindicator.client.ClientBootstrap;
+import com.esugames.obsindicator.client.ObsRecIndicatorClient;
+import com.esugames.obsindicator.client.config.ConfigScreenOpener;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;

@@ -1,7 +1,7 @@
-package com.obsindicator.mixin.client;
+package com.esugames.obsindicator.mixin.client;
 
-import com.obsindicator.client.ClientBootstrap;
-import com.obsindicator.client.hud.RecordingHudOverlay;
+import com.esugames.obsindicator.client.ClientBootstrap;
+import com.esugames.obsindicator.client.hud.RecordingHudOverlay;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.injection.At;

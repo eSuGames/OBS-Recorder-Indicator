@@ -1,4 +1,4 @@
-package com.obsindicator.config;
+package com.esugames.obsindicator.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
