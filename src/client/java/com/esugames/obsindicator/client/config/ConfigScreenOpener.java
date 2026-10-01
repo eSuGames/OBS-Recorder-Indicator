@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
  */
 public final class ConfigScreenOpener {
 	private static final Logger LOGGER = LoggerFactory.getLogger("obs_rec_indicator");
-	private static final String MOD_CONFIG_ID = "obs-rec-indicator";
+	private static final String MOD_CONFIG_ID = "obs_rec_indicator";
 
 	private ConfigScreenOpener() {
 	}

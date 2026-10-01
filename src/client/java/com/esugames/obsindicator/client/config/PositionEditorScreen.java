@@ -139,9 +139,9 @@ public final class PositionEditorScreen extends Screen {
 				Class<?> clazz = Class.forName("com.esugames.obsindicator.client.config.ObsIndicatorOneConfig");
 				Object one = clazz.getMethod("instance").invoke(null);
 				if (one != null) {
-					clazz.getField("positionX").setInt(one, draft.positionX);
-					clazz.getField("positionY").setInt(one, draft.positionY);
-					clazz.getField("scale").setFloat(one, draft.scale);
+					clazz.getMethod("setPositionX", int.class).invoke(one, draft.positionX);
+					clazz.getMethod("setPositionY", int.class).invoke(one, draft.positionY);
+					clazz.getMethod("setScale", float.class).invoke(one, draft.scale);
 				}
 			} catch (Throwable ignored) {
 			}
@@ -175,20 +175,60 @@ public final class PositionEditorScreen extends Screen {
 			this.width / 2 - 40, this.height - 96, 0xFFCCCCCC, false);
 	}
 
+	/** MouseButtonEvent coords may be screen-pixel or GUI-scaled depending on the input path. */
+	private double guiX(MouseButtonEvent event) {
+		double x = event.x();
+		if (this.minecraft != null && this.minecraft.getWindow() != null) {
+			int sw = this.minecraft.getWindow().getScreenWidth();
+			if (sw > 0 && x > this.width) {
+				return x * (double) this.width / sw;
+			}
+		}
+		return x;
+	}
+
+	private double guiY(MouseButtonEvent event) {
+		double y = event.y();
+		if (this.minecraft != null && this.minecraft.getWindow() != null) {
+			int sh = this.minecraft.getWindow().getScreenHeight();
+			if (sh > 0 && y > this.height) {
+				return y * (double) this.height / sh;
+			}
+		}
+		return y;
+	}
+
+	private boolean isPreviewClick(MouseButtonEvent event) {
+		double y = guiY(event);
+		// Ignore control strip (text fields / buttons) at the bottom.
+		return y < this.height - 100;
+	}
+
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-		if (event.button() == 0 && event.y() < this.height - 114) {
-			dragging = true;
-			updateFromMouse(event.x(), event.y());
+		// Let widgets (EditBox / Button) consume their clicks first.
+		if (super.mouseClicked(event, doubleClick)) {
 			return true;
 		}
-		return super.mouseClicked(event, doubleClick);
+		if (isPreviewClick(event)) {
+			dragging = true;
+			updateFromMouse(guiX(event), guiY(event));
+			return true;
+		}
+		return false;
 	}
 
 	@Override
 	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
 		if (dragging) {
-			updateFromMouse(event.x(), event.y());
+			double x = guiX(event);
+			double y = guiY(event);
+			// Fallback if the event coords are unusable but deltas are provided.
+			if ((x == 0 && y == 0) || x > this.width || y > this.height) {
+				x = draft.positionX + this.width / 2.0 + dragX;
+				y = draft.positionY + this.height / 2.0 + dragY;
+			}
+			updateFromMouse(x, y);
 			return true;
 		}
 		return super.mouseDragged(event, dragX, dragY);
@@ -196,7 +236,11 @@ public final class PositionEditorScreen extends Screen {
 
 	@Override
 	public boolean mouseReleased(MouseButtonEvent event) {
+		boolean was = dragging;
 		dragging = false;
+		if (was) {
+			return true;
+		}
 		return super.mouseReleased(event);
 	}
 
@@ -204,10 +248,24 @@ public final class PositionEditorScreen extends Screen {
 		draft.positionX = (int) Math.round(mouseX - this.width / 2.0);
 		draft.positionY = (int) Math.round(mouseY - this.height / 2.0);
 		if (posXBox != null) {
+			posXBox.setResponder(null);
 			posXBox.setValue(String.valueOf(draft.positionX));
+			posXBox.setResponder(v -> {
+				try {
+					draft.positionX = Integer.parseInt(v.trim());
+				} catch (NumberFormatException ignored) {
+				}
+			});
 		}
 		if (posYBox != null) {
+			posYBox.setResponder(null);
 			posYBox.setValue(String.valueOf(draft.positionY));
+			posYBox.setResponder(v -> {
+				try {
+					draft.positionY = Integer.parseInt(v.trim());
+				} catch (NumberFormatException ignored) {
+				}
+			});
 		}
 	}
 

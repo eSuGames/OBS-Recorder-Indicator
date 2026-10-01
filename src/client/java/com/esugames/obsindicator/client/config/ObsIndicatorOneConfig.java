@@ -52,14 +52,48 @@ public final class ObsIndicatorOneConfig extends Config {
 	@Slider(title = "Indicator size", min = 0.25f, max = 4.0f, step = 0.05f, category = "Position")
 	public float scale = 1.0f;
 
+	/** Used by OneConfig field binding so edits apply immediately. */
+	public int getPositionX() {
+		return positionX;
+	}
+
+	public void setPositionX(int value) {
+		positionX = value;
+		applyPositionToRuntime();
+	}
+
+	public int getPositionY() {
+		return positionY;
+	}
+
+	public void setPositionY(int value) {
+		positionY = value;
+		applyPositionToRuntime();
+	}
+
+	public float getScale() {
+		return scale;
+	}
+
+	public void setScale(float value) {
+		scale = value;
+		applyPositionToRuntime();
+	}
+
+	private void applyPositionToRuntime() {
+		ModConfig dst = ConfigManager.get();
+		dst.positionX = positionX;
+		dst.positionY = positionY;
+		dst.scale = scale;
+		lastHash = valueHash();
+		ConfigManager.save();
+	}
+
 	@Button(title = "Position editor", text = "Open", category = "Position",
 		description = "Drag the indicator on a full-screen preview")
 	public void openPositionEditor() {
 		applyToRuntime();
-		net.minecraft.client.Minecraft client = net.minecraft.client.Minecraft.getInstance();
-		if (client != null) {
-			client.execute(() -> client.gui.setScreen(new PositionEditorScreen(client.gui.screen())));
-		}
+		com.esugames.obsindicator.client.config.ConfigScreenOpener.openPositionEditor();
 	}
 
 	@Text(title = "OBS host", category = "OBS")
@@ -92,7 +126,7 @@ public final class ObsIndicatorOneConfig extends Config {
 	private static boolean pendingReloadFromRuntime;
 
 	public ObsIndicatorOneConfig() {
-		super("obs-rec-indicator", "OBS Rec Indicator", Category.UTILITY);
+		super("obs_rec_indicator", "OBS Rec Indicator", Category.UTILITY);
 		loadFromRuntime();
 	}
 
