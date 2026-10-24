@@ -9,15 +9,39 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Built-in config screen. The full window is a position preview: drag the indicator.
- * Origin (0,0) is the screen center. +X = right, +Y = down.
+ * Built-in config screen, used when OneConfig is not installed.
+ *
+ * <p>The window is a position preview: drag the indicator (or any free area of the screen) to move
+ * it. Only the widgets themselves — buttons and text boxes — swallow a click; everywhere else starts
+ * a drag. That matters because at a large GUI scale the settings panel covers almost the whole
+ * screen, so a "drag outside the panel" rule would leave no usable drag area at all.</p>
+ *
+ * <p>Origin (0,0) is the screen center. +X = right, +Y = down. While this screen is open the normal
+ * in-game indicator is hidden, so the preview is the only indicator on screen and follows the
+ * mouse exactly.</p>
  */
 public final class BuiltinConfigScreen extends Screen {
+	private static final Logger LOGGER = LoggerFactory.getLogger("obs_rec_indicator");
+
+	/**
+	 * Primary (left) mouse button.
+	 *
+	 * <p>1.21 and older numbered mouse buttons from zero, but 26.3 numbers them from one:
+	 * {@code MouseHandler.onButton} treats {@code button() == 1} as the left button (2 = middle,
+	 * 3 = right) and {@code AbstractWidget#isValidClickButton} only accepts 1. Comparing against 0
+	 * — as this screen used to — never matches a real click, so dragging could never start.</p>
+	 */
+	private static final int PRIMARY_BUTTON = 1;
+	/** Zero-based numbering used by older versions; unused in 26.3. */
+	private static final int LEGACY_PRIMARY_BUTTON = 0;
+
 	private final Screen parent;
 	private final ModConfig draft;
 	private final List<int[]> labelPos = new ArrayList<>();
@@ -32,10 +56,15 @@ public final class BuiltinConfigScreen extends Screen {
 	private EditBox colorBox;
 
 	private boolean dragging;
+	/** Set once so a support log line shows whether clicks actually reach this screen. */
+	private boolean toldAboutDrag;
+	/** Cursor position minus the indicator origin at the moment the drag started. */
+	private double dragOffsetX;
+	private double dragOffsetY;
+
 	private int panelX;
 	private int panelY;
 	private int panelW;
-	private int panelH;
 
 	public BuiltinConfigScreen(Screen parent) {
 		super(Component.translatable("obs_rec_indicator.gui.title"));
@@ -63,7 +92,7 @@ public final class BuiltinConfigScreen extends Screen {
 		labelText.clear();
 		dragging = false;
 
-		// Centered settings panel. Rest of the screen is the position drag zone.
+		// Centered settings panel. Everything that is not a widget is a drag zone.
 		panelW = 320;
 		panelX = (this.width - panelW) / 2;
 		panelY = 24;
@@ -191,13 +220,27 @@ public final class BuiltinConfigScreen extends Screen {
 			pullFields();
 			ConfigManager.get().applyFrom(draft);
 			ConfigManager.save();
+			LOGGER.info("Built-in config saved: position=({}, {}) scale={}",
+				draft.positionX, draft.positionY, draft.scale);
 			this.onClose();
 		}).bounds(left, y, w, 20).build());
 
 		this.addRenderableWidget(Button.builder(tr("obs_rec_indicator.gui.cancel"), b -> this.onClose())
 			.bounds(right, y, w, 20).build());
+	}
 
-		panelH = y + 20 + 12 - panelY;
+	@Override
+	public void added() {
+		super.added();
+		// The preview below is the only indicator while this screen is open.
+		RecordingHudOverlay.setScreenPreviewActive(true);
+	}
+
+	@Override
+	public void removed() {
+		RecordingHudOverlay.setScreenPreviewActive(false);
+		dragging = false;
+		super.removed();
 	}
 
 	private void syncPosBoxes() {
@@ -239,8 +282,52 @@ public final class BuiltinConfigScreen extends Screen {
 		}
 	}
 
-	private boolean hitsPanel(double x, double y) {
-		return x >= panelX && x <= panelX + panelW && y >= panelY && y <= panelY + panelH;
+	private RecordingHudOverlay.Metrics metrics() {
+		if (this.minecraft == null || this.minecraft.font == null) {
+			return null;
+		}
+		String label = draft.recordingText == null ? "" : draft.recordingText;
+		return RecordingHudOverlay.metrics(this.minecraft, draft, label, draft.scale);
+	}
+
+	/** Top-left content corner of the previewed indicator, matching {@link ModConfig}'s origin. */
+	private int previewOriginX() {
+		return this.width / 2 + draft.positionX;
+	}
+
+	private int previewOriginY(RecordingHudOverlay.Metrics metrics) {
+		int contentHeight = metrics == null ? 0 : metrics.contentHeight();
+		return this.height / 2 + draft.positionY - contentHeight / 2;
+	}
+
+	/** Starts a drag without snapping the indicator to the cursor. */
+	private void beginDrag(double mouseX, double mouseY) {
+		RecordingHudOverlay.Metrics metrics = metrics();
+		dragOffsetX = mouseX - previewOriginX();
+		dragOffsetY = mouseY - previewOriginY(metrics);
+		dragging = true;
+		if (!toldAboutDrag) {
+			toldAboutDrag = true;
+			LOGGER.info("Built-in config: drag started at ({}, {})", mouseX, mouseY);
+		}
+	}
+
+	private void dragTo(double mouseX, double mouseY) {
+		RecordingHudOverlay.Metrics metrics = metrics();
+		int originX = (int) Math.round(mouseX - dragOffsetX);
+		int originY = (int) Math.round(mouseY - dragOffsetY);
+		int contentHeight = metrics == null ? 0 : metrics.contentHeight();
+
+		// Keep the indicator origin inside the screen so it can never be dragged out of reach.
+		int x = clamp(originX - this.width / 2, -this.width / 2, this.width / 2);
+		int y = clamp(originY - this.height / 2 + contentHeight / 2, -this.height / 2, this.height / 2);
+		draft.positionX = x;
+		draft.positionY = y;
+		syncPosBoxes();
+	}
+
+	private static int clamp(int value, int min, int max) {
+		return Math.max(min, Math.min(max, value));
 	}
 
 	@Override
@@ -248,9 +335,10 @@ public final class BuiltinConfigScreen extends Screen {
 		super.extractRenderState(graphics, mouseX, mouseY, delta);
 
 		if (dragging) {
-			updatePositionFromMouse(mouseX, mouseY);
+			dragTo(mouseX, mouseY);
 		}
 
+		RecordingHudOverlay.Metrics metrics = metrics();
 		RecordingHudOverlay.drawIndicator(
 			graphics,
 			this.minecraft,
@@ -263,30 +351,77 @@ public final class BuiltinConfigScreen extends Screen {
 			0
 		);
 
+		if (metrics != null && metrics.contentWidth() > 0) {
+			int originX = previewOriginX();
+			int originY = previewOriginY(metrics);
+			int pad = metrics.padding();
+			int x0 = originX - pad;
+			int y0 = originY - pad;
+			int x1 = originX + metrics.contentWidth() + pad;
+			int y1 = originY + metrics.contentHeight() + pad;
+
+			if (dragging) {
+				// Dashed-looking outline so it is obvious what is being dragged.
+				int color = 0xFFFFFFFF;
+				graphics.fill(x0, y0, x1, y0 + 1, color);
+				graphics.fill(x0, y1 - 1, x1, y1, color);
+				graphics.fill(x0, y0, x0 + 1, y1, color);
+				graphics.fill(x1 - 1, y0, x1, y1, color);
+				graphics.text(this.font, Component.literal(draft.positionX + ", " + draft.positionY),
+					x1 + 4, y0, color, true);
+			}
+		}
+
 		graphics.text(this.font, this.title, this.width / 2 - this.font.width(this.title) / 2, panelY - 14, 0xFFFFFFFF, true);
 		for (int i = 0; i < labelPos.size() && i < labelText.size(); i++) {
 			int[] pos = labelPos.get(i);
 			graphics.text(this.font, labelText.get(i), pos[0], pos[1], 0xFFCCCCCC, false);
 		}
+
+		Component hint = tr("obs_rec_indicator.gui.drag_hint");
+		graphics.text(this.font, hint, this.width / 2 - this.font.width(hint) / 2,
+			this.height - 12, 0xFFAAAAAA, false);
+	}
+
+	private static boolean isPrimaryButton(MouseButtonEvent event) {
+		return event != null
+			&& (event.button() == PRIMARY_BUTTON || event.button() == LEGACY_PRIMARY_BUTTON);
 	}
 
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-		if (event.button() == 0 && !hitsPanel(event.x(), event.y())) {
-			dragging = true;
-			updatePositionFromMouse(event.x(), event.y());
+		// Widgets (buttons, text boxes) keep their own clicks; anything else starts a drag.
+		if (isPrimaryButton(event) && this.getChildAt(event.x(), event.y()).isEmpty()) {
+			beginDrag(event.x(), event.y());
+			dragTo(event.x(), event.y());
 			return true;
 		}
-		return super.mouseClicked(event, doubleClick);
+		boolean handled = super.mouseClicked(event, doubleClick);
+		if (!handled && isPrimaryButton(event)) {
+			// Nothing under the cursor wanted the click, so do not drop it.
+			beginDrag(event.x(), event.y());
+			dragTo(event.x(), event.y());
+			return true;
+		}
+		return handled;
 	}
 
 	@Override
 	public boolean mouseDragged(MouseButtonEvent event, double dragX, double dragY) {
 		if (dragging) {
-			updatePositionFromMouse(event.x(), event.y());
+			dragTo(event.x(), event.y());
 			return true;
 		}
 		return super.mouseDragged(event, dragX, dragY);
+	}
+
+	@Override
+	public void mouseMoved(double x, double y) {
+		super.mouseMoved(x, y);
+		// Some paths deliver movement without a drag callback; keep following the cursor anyway.
+		if (dragging) {
+			dragTo(x, y);
+		}
 	}
 
 	@Override
@@ -295,17 +430,10 @@ public final class BuiltinConfigScreen extends Screen {
 		return super.mouseReleased(event);
 	}
 
-	/** Mouse on the full screen → center-relative X/Y (0,0 = screen center). */
-	private void updatePositionFromMouse(double mouseX, double mouseY) {
-		int x = (int) Math.round(mouseX - this.width / 2.0);
-		int y = (int) Math.round(mouseY - this.height / 2.0);
-		draft.positionX = x;
-		draft.positionY = y;
-		syncPosBoxes();
-	}
-
 	@Override
 	public void onClose() {
+		dragging = false;
+		RecordingHudOverlay.setScreenPreviewActive(false);
 		if (this.minecraft != null) {
 			this.minecraft.gui.setScreen(this.parent);
 		}

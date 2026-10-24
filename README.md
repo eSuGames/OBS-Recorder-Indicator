@@ -70,14 +70,39 @@ Without OneConfig, these are also available:
 
 ## 位置調整 / Position
 
+### OneConfig を導入している場合 / With OneConfig
+
+インジケーターは OneConfig の HUD として登録されます。
+
+- OneConfig の **HUD エディター** でインジケーターをドラッグして位置を変更
+- 同じ設定画面の **Scale** でサイズを変更
+- 同じ設定画面に **背景 / 影 / 丸 / 文字** の切り替えスイッチがあります
+- 位置とサイズは OneConfig 側に保存されます
+- 複製するとインジケーターを複数置けます(位置・サイズ・表示/非表示は 1 個ずつ)
+- **Delete HUD**(HUD 設定の最下部、または HUD の右クリックメニュー)は押したインジケーターだけを削除します
+  - 他のインジケーターには影響しません
+  - すべて削除するとインジケーターは消えたままになり、再起動しても復活しません
+  - 戻すときは OneConfig の **HUD ライブラリ** から「OBS Rec Indicator」を追加してください
+- 背景 / 影 / 丸 / 文字 の設定は mod の設定ファイル(`config/obs_rec_indicator.json`)に保存され、すべてのインジケーターで共通です
+
+EN: The indicator is a OneConfig HUD. Drag it in OneConfig's **HUD editor** to move it, change the
+size with **Scale**, and toggle **Background / Shadow / Circle / Text** on the same settings page.
+Position and size are stored by OneConfig. Duplicate it to place several indicators (each keeps its
+own position, scale and visibility), and use **Delete HUD** (bottom of the HUD settings or the
+right-click menu) to remove just that one indicator. Deleting every copy keeps it deleted across
+restarts; add it back from OneConfig's **HUD library**. The Background / Shadow / Circle / Text
+switches are shared by every copy and live in the mod's own config file.
+
+### OneConfig を導入していない場合 / Without OneConfig
+
 画面中央が (0,0) です。右 +X、下 +Y。
 
 Origin is the screen center. +X right, +Y down.
 
-- 内蔵 Config、または OneConfig の **Position editor** から、画面全体のプレビューでドラッグ
+- 内蔵 Config を開き、ボタン以外の場所をドラッグ(プレビューが追従)、または X / Y を直接入力
 - サイズ: `-0.5` / `-0.25` / `1.00x` / `+0.25` / `+0.5`
 
-Drag on the full-screen preview from the built-in config, or from OneConfig’s **Position editor**.
+Open the built-in config and drag anywhere that is not a button (the preview follows the mouse), or type X / Y directly.
 
 ## 設定ファイル / Config
 

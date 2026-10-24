@@ -21,7 +21,7 @@
 	"obs_rec_indicator.gui.x_offset": "X",
 	"obs_rec_indicator.gui.y_offset": "Y",
 	"obs_rec_indicator.gui.reset_position": "Reset position",
-	"obs_rec_indicator.gui.position_editor": "Position Editor",
+	"obs_rec_indicator.gui.drag_hint": "Drag anywhere to move the indicator",
 	"obs_rec_indicator.gui.save": "Save",
 	"obs_rec_indicator.gui.cancel": "Cancel",
 	"obs_rec_indicator.gui.host": "OBS host",
@@ -32,5 +32,14 @@
 	"obs_rec_indicator.cmd.offset_set": "Position set to %s, %s",
 	"obs_rec_indicator.cmd.offset_reset": "Position reset",
 	"obs_rec_indicator.cmd.reconnect": "Reconnecting to OBS...",
-	"obs_rec_indicator.cmd.not_started": "OBS client not started"
+	"obs_rec_indicator.cmd.not_started": "OBS client not started",
+	"obs_rec_indicator.oneconfig.hud.category": "Display",
+	"obs_rec_indicator.oneconfig.hud.background": "Background",
+	"obs_rec_indicator.oneconfig.hud.background.desc": "Draw the dark background behind the indicator.",
+	"obs_rec_indicator.oneconfig.hud.shadow": "Shadow",
+	"obs_rec_indicator.oneconfig.hud.shadow.desc": "Draw a shadow behind the text.",
+	"obs_rec_indicator.oneconfig.hud.circle": "Circle",
+	"obs_rec_indicator.oneconfig.hud.circle.desc": "Show the coloured recording state circle.",
+	"obs_rec_indicator.oneconfig.hud.text": "Text",
+	"obs_rec_indicator.oneconfig.hud.text.desc": "Show the REC / PAUSED text."
 }

@@ -42,11 +42,13 @@ public final class ObsRecIndicatorClient implements ClientModInitializer {
 
 		if (OneConfigSupport.isPresent()) {
 			OneConfigSupport.registerIfPresent();
+			OneConfigSupport.registerHudIfPresent();
 		}
 
 		ClientTickEvents.END_CLIENT_TICK.register(client -> {
 			if (OneConfigSupport.isPresent()) {
 				OneConfigSupport.registerIfPresent();
+				OneConfigSupport.registerHudIfPresent();
 				OneConfigSupport.syncFromOneConfigIfChanged();
 			}
 		});

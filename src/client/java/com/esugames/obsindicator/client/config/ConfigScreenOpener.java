@@ -5,8 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Opens OneConfig mod page or the built-in config / position editor.
- * No OneConfig HUD integration.
+ * Opens OneConfig's mod page or the built-in config screen.
+ *
+ * <p>The built-in screen is the only editor when OneConfig is not installed, and it stays as the
+ * fallback when OneConfig is installed but its page cannot be opened.</p>
  */
 public final class ConfigScreenOpener {
 	private static final Logger LOGGER = LoggerFactory.getLogger("obs_rec_indicator");
@@ -27,6 +29,7 @@ public final class ConfigScreenOpener {
 		}
 		minecraft.execute(() -> {
 			OneConfigSupport.registerIfPresent();
+			OneConfigSupport.registerHudIfPresent();
 			if (OneConfigSupport.isPresent() && tryOpenOneConfigModPage()) {
 				return;
 			}
@@ -34,21 +37,6 @@ public final class ConfigScreenOpener {
 				minecraft.gui.setScreen(new BuiltinConfigScreen(minecraft.gui.screen()));
 			} catch (Throwable t) {
 				LOGGER.error("Failed to open builtin config screen", t);
-			}
-		});
-	}
-
-	/** Position-only editor (also used from OneConfig's Position editor button). */
-	public static void openPositionEditor() {
-		Minecraft minecraft = Minecraft.getInstance();
-		if (minecraft == null) {
-			return;
-		}
-		minecraft.execute(() -> {
-			try {
-				minecraft.gui.setScreen(new PositionEditorScreen(minecraft.gui.screen()));
-			} catch (Throwable t) {
-				LOGGER.error("Failed to open position editor", t);
 			}
 		});
 	}

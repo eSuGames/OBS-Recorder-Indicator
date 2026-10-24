@@ -2,6 +2,7 @@ package com.esugames.obsindicator.client.hud;
 
 import com.esugames.obsindicator.RecordState;
 import com.esugames.obsindicator.client.ObsRecIndicatorClient;
+import com.esugames.obsindicator.client.config.OneConfigSupport;
 import com.esugames.obsindicator.config.ConfigManager;
 import com.esugames.obsindicator.config.ModConfig;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
@@ -12,11 +13,26 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.resources.Identifier;
 
 /**
- * Always draws the recording indicator via Fabric HUD.
+ * Draws the recording indicator via the Fabric HUD.
  * Never references OneConfig types (would crash when OneConfig is absent).
+ *
+ * <p>When OneConfig is installed the indicator is registered as a OneConfig HUD instead, so
+ * OneConfig draws (and positions) it from its own HUD editor and this pass stays out of the way.
+ * Everything in here is still used unchanged when OneConfig is not installed.</p>
  */
 public final class RecordingHudOverlay {
+	/** True while the built-in config screen draws its own draggable preview. */
+	private static boolean screenPreviewActive;
+
 	private RecordingHudOverlay() {
+	}
+
+	/**
+	 * Hides the in-game indicator while one of the mod's own screens previews it, so there is only
+	 * ever one indicator on screen and it is the one following the mouse.
+	 */
+	public static void setScreenPreviewActive(boolean active) {
+		screenPreviewActive = active;
 	}
 
 	public static void register() {
@@ -28,6 +44,15 @@ public final class RecordingHudOverlay {
 	}
 
 	private static void render(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
+		// OneConfig owns rendering when its HUD is registered.
+		if (OneConfigSupport.isHudRegistered()) {
+			return;
+		}
+		// The built-in config screen draws its own preview.
+		if (screenPreviewActive) {
+			return;
+		}
+
 		ModConfig config = ConfigManager.get();
 		if (!config.enabled) {
 			return;
@@ -54,18 +79,25 @@ public final class RecordingHudOverlay {
 		drawIndicator(graphics, minecraft, config, screenWidth, screenHeight, color, label, 0, 0);
 	}
 
-	public static void drawIndicator(
-		GuiGraphicsExtractor graphics,
-		Minecraft minecraft,
-		ModConfig config,
-		int screenWidth,
-		int screenHeight,
-		int color,
-		String label,
-		int translateX,
-		int translateY
+	/**
+	 * Measured geometry of the indicator at a given scale. Shared by the Fabric HUD, the built-in
+	 * screens and the OneConfig HUD so all of them agree on the indicator's size.
+	 */
+	public record Metrics(
+		float scale,
+		boolean showCircle,
+		boolean showText,
+		int textWidth,
+		int textHeight,
+		int radius,
+		int gap,
+		int padding,
+		int contentWidth,
+		int contentHeight
 	) {
-		float scale = config.scale;
+	}
+
+	public static Metrics metrics(Minecraft minecraft, ModConfig config, String label, float scale) {
 		boolean showCircle = config.showCircle;
 		boolean showText = config.showText && label != null && !label.isEmpty();
 
@@ -82,27 +114,65 @@ public final class RecordingHudOverlay {
 		int circleBlock = showCircle ? radius * 2 + (textWidth > 0 ? gap : 0) : 0;
 		int contentWidth = circleBlock + textWidth;
 		int contentHeight = Math.max(showCircle ? radius * 2 : 0, showText ? textHeight : 0);
-		if (contentWidth <= 0 || contentHeight <= 0) {
+		return new Metrics(scale, showCircle, showText, textWidth, textHeight, radius, gap, padding,
+			contentWidth, contentHeight);
+	}
+
+	public static void drawIndicator(
+		GuiGraphicsExtractor graphics,
+		Minecraft minecraft,
+		ModConfig config,
+		int screenWidth,
+		int screenHeight,
+		int color,
+		String label,
+		int translateX,
+		int translateY
+	) {
+		Metrics metrics = metrics(minecraft, config, label, config.scale);
+		if (metrics.contentWidth() <= 0 || metrics.contentHeight() <= 0) {
 			return;
 		}
 
 		int originX = config.originX(screenWidth) + translateX;
-		int originY = config.originY(screenHeight, contentHeight) + translateY;
+		int originY = config.originY(screenHeight, metrics.contentHeight()) + translateY;
+		drawAt(graphics, minecraft, config, label, color, metrics, originX, originY);
+	}
+
+	/**
+	 * Draws the indicator with its top-left content corner at {@code originX/originY}.
+	 *
+	 * @param metrics geometry from {@link #metrics(Minecraft, ModConfig, String, float)}
+	 */
+	public static void drawAt(
+		GuiGraphicsExtractor graphics,
+		Minecraft minecraft,
+		ModConfig config,
+		String label,
+		int color,
+		Metrics metrics,
+		int originX,
+		int originY
+	) {
+		if (metrics.contentWidth() <= 0 || metrics.contentHeight() <= 0) {
+			return;
+		}
 
 		if (config.showBackground) {
-			graphics.fill(originX - padding, originY - padding,
-				originX + contentWidth + padding, originY + contentHeight + padding, 0x66000000);
+			graphics.fill(originX - metrics.padding(), originY - metrics.padding(),
+				originX + metrics.contentWidth() + metrics.padding(),
+				originY + metrics.contentHeight() + metrics.padding(), 0x66000000);
 		}
 
 		int textX = originX;
-		int midY = originY + contentHeight / 2;
-		if (showCircle) {
-			fillCircle(graphics, originX + radius, midY, radius, color);
-			textX = originX + radius * 2 + gap;
+		int midY = originY + metrics.contentHeight() / 2;
+		if (metrics.showCircle()) {
+			fillCircle(graphics, originX + metrics.radius(), midY, metrics.radius(), color);
+			textX = originX + metrics.radius() * 2 + metrics.gap();
 		}
 
-		if (showText) {
-			int textColor = showCircle ? 0xFFFFFFFF : color;
+		if (metrics.showText()) {
+			int textColor = metrics.showCircle() ? 0xFFFFFFFF : color;
 			// One compensation only: place origin on the circle center, scale once,
 			// then offset in unscaled font pixels (-3 ≈ optical center of capitals).
 			// Do NOT also multiply fontH * scale in the translate — that stacks with pose.scale.
@@ -110,8 +180,8 @@ public final class RecordingHudOverlay {
 			pose.pushMatrix();
 			// -0.5f: half-step down from the previous -4 (i.e. effective -3.5)
 			pose.translate(textX, midY + 0.5f);
-			if (scale != 1.0f) {
-				pose.scale(scale, scale);
+			if (metrics.scale() != 1.0f) {
+				pose.scale(metrics.scale(), metrics.scale());
 			}
 			graphics.text(minecraft.font, label, 0, -4, textColor, config.showShadow);
 			pose.popMatrix();

@@ -21,7 +21,7 @@
 	"obs_rec_indicator.gui.x_offset": "X",
 	"obs_rec_indicator.gui.y_offset": "Y",
 	"obs_rec_indicator.gui.reset_position": "位置をリセット",
-	"obs_rec_indicator.gui.position_editor": "位置エディター",
+	"obs_rec_indicator.gui.drag_hint": "ドラッグで位置を変更できます",
 	"obs_rec_indicator.gui.save": "保存",
 	"obs_rec_indicator.gui.cancel": "キャンセル",
 	"obs_rec_indicator.gui.host": "OBS ホスト",
@@ -32,5 +32,14 @@
 	"obs_rec_indicator.cmd.offset_set": "位置を %s, %s に設定",
 	"obs_rec_indicator.cmd.offset_reset": "位置をリセットしました",
 	"obs_rec_indicator.cmd.reconnect": "OBS に再接続中...",
-	"obs_rec_indicator.cmd.not_started": "OBS クライアント未起動"
+	"obs_rec_indicator.cmd.not_started": "OBS クライアント未起動",
+	"obs_rec_indicator.oneconfig.hud.category": "表示",
+	"obs_rec_indicator.oneconfig.hud.background": "背景",
+	"obs_rec_indicator.oneconfig.hud.background.desc": "インジケーターの背景を描画します。",
+	"obs_rec_indicator.oneconfig.hud.shadow": "影",
+	"obs_rec_indicator.oneconfig.hud.shadow.desc": "文字に影を付けます。",
+	"obs_rec_indicator.oneconfig.hud.circle": "丸",
+	"obs_rec_indicator.oneconfig.hud.circle.desc": "録画状態を表す丸を表示します。",
+	"obs_rec_indicator.oneconfig.hud.text": "文字",
+	"obs_rec_indicator.oneconfig.hud.text.desc": "REC / PAUSED の文字を表示します。"
 }

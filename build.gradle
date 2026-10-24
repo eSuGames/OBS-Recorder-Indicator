@@ -40,9 +40,13 @@ dependencies {
 
 	// Optional — compileOnly so the jar never requires OneConfig at runtime.
 	// Extracted API modules from OneConfig 1.2.0 (26.3 Fabric). Not bundled into the mod jar.
+	// "hud" provides the HUD API (the indicator is a OneConfig HUD when OneConfig is installed),
+	// "26.3-fabric" is OneConfig's platform module, which is where LegacyHud lives.
 	compileOnly files(
 		"libs/oneconfig-config-1.2.0.jar",
 		"libs/oneconfig-config-impl-1.2.0.jar",
+		"libs/oneconfig-hud-1.2.0.jar",
+		"libs/oneconfig-26.3-fabric-1.2.0.jar",
 		"libs/kotlin-stdlib-2.1.0.jar"
 	)
 }

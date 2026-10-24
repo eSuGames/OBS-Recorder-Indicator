@@ -2,19 +2,20 @@ package com.esugames.obsindicator.client.config;
 
 import com.esugames.obsindicator.config.ConfigManager;
 import com.esugames.obsindicator.config.ModConfig;
-import net.fabricmc.loader.api.FabricLoader;
 import org.polyfrost.oneconfig.api.config.v1.Config;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Button;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Number;
-import org.polyfrost.oneconfig.api.config.v1.annotations.Slider;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Optional OneConfig 1.1 config with annotated options.
- * Position uses screen-center origin (0,0 = center).
+ * Optional OneConfig config with annotated options.
+ *
+ * <p>Position and size are deliberately not part of this config any more: when OneConfig is
+ * installed the indicator is a OneConfig HUD ({@link RecordingIndicatorHud}) and its position is
+ * edited by dragging it in OneConfig's HUD editor, with the size in that editor's Scale setting.</p>
  */
 public final class ObsIndicatorOneConfig extends Config {
 	private static final Logger LOGGER = LoggerFactory.getLogger("obs_rec_indicator");
@@ -42,59 +43,6 @@ public final class ObsIndicatorOneConfig extends Config {
 
 	@Text(title = "Recording color (hex)", category = "Text", placeholder = "#E53935")
 	public String recordingColor = "#E53935";
-
-	@Number(title = "X", min = -800, max = 800, category = "Position")
-	public int positionX = ModConfig.DEFAULT_POS_X;
-
-	@Number(title = "Y", min = -800, max = 800, category = "Position")
-	public int positionY = ModConfig.DEFAULT_POS_Y;
-
-	@Slider(title = "Indicator size", min = 0.25f, max = 4.0f, step = 0.05f, category = "Position")
-	public float scale = 1.0f;
-
-	/** Used by OneConfig field binding so edits apply immediately. */
-	public int getPositionX() {
-		return positionX;
-	}
-
-	public void setPositionX(int value) {
-		positionX = value;
-		applyPositionToRuntime();
-	}
-
-	public int getPositionY() {
-		return positionY;
-	}
-
-	public void setPositionY(int value) {
-		positionY = value;
-		applyPositionToRuntime();
-	}
-
-	public float getScale() {
-		return scale;
-	}
-
-	public void setScale(float value) {
-		scale = value;
-		applyPositionToRuntime();
-	}
-
-	private void applyPositionToRuntime() {
-		ModConfig dst = ConfigManager.get();
-		dst.positionX = positionX;
-		dst.positionY = positionY;
-		dst.scale = scale;
-		lastHash = valueHash();
-		ConfigManager.save();
-	}
-
-	@Button(title = "Position editor", text = "Open", category = "Position",
-		description = "Drag the indicator on a full-screen preview")
-	public void openPositionEditor() {
-		applyToRuntime();
-		com.esugames.obsindicator.client.config.ConfigScreenOpener.openPositionEditor();
-	}
 
 	@Text(title = "OBS host", category = "OBS")
 	public String obsHost = "127.0.0.1";
@@ -131,7 +79,7 @@ public final class ObsIndicatorOneConfig extends Config {
 	}
 
 	public static void registerIfPresent() {
-		if (!FabricLoader.getInstance().isModLoaded("oneconfig")) {
+		if (!OneConfigSupport.isPresent()) {
 			return;
 		}
 		if (instance == null) {
@@ -148,6 +96,19 @@ public final class ObsIndicatorOneConfig extends Config {
 
 	public static ObsIndicatorOneConfig instance() {
 		return instance;
+	}
+
+	/**
+	 * Re-reads the values from {@link ModConfig}.
+	 *
+	 * <p>Used after the OneConfig HUD wrote a switch back into the runtime config, so this page
+	 * never shows stale values.</p>
+	 */
+	public static void reloadFromRuntime() {
+		ObsIndicatorOneConfig cfg = instance;
+		if (cfg != null) {
+			cfg.loadFromRuntime();
+		}
 	}
 
 	public static void syncFromOneConfigIfChanged() {
@@ -175,12 +136,9 @@ public final class ObsIndicatorOneConfig extends Config {
 		h = 31 * h + Boolean.hashCode(showText);
 		h = 31 * h + Boolean.hashCode(showBackground);
 		h = 31 * h + Boolean.hashCode(showShadow);
-		h = 31 * h + Float.floatToIntBits(scale);
 		h = 31 * h + (recordingText == null ? 0 : recordingText.hashCode());
 		h = 31 * h + (pausedText == null ? 0 : pausedText.hashCode());
 		h = 31 * h + (recordingColor == null ? 0 : recordingColor.hashCode());
-		h = 31 * h + positionX;
-		h = 31 * h + positionY;
 		h = 31 * h + (obsHost == null ? 0 : obsHost.hashCode());
 		h = 31 * h + obsPort;
 		h = 31 * h + (obsPassword == null ? 0 : obsPassword.hashCode());
@@ -196,12 +154,9 @@ public final class ObsIndicatorOneConfig extends Config {
 		showText = src.showText;
 		showBackground = src.showBackground;
 		showShadow = src.showShadow;
-		scale = src.scale;
 		recordingText = src.recordingText;
 		pausedText = src.pausedText;
 		recordingColor = src.recordingColor;
-		positionX = src.positionX;
-		positionY = src.positionY;
 		obsHost = src.obsHost;
 		obsPort = src.obsPort;
 		obsPassword = src.obsPassword;
@@ -217,13 +172,10 @@ public final class ObsIndicatorOneConfig extends Config {
 		dst.showText = showText;
 		dst.showBackground = showBackground;
 		dst.showShadow = showShadow;
-		dst.scale = scale;
 		dst.recordingText = recordingText == null || recordingText.isBlank() ? "REC" : recordingText;
 		dst.pausedText = pausedText == null || pausedText.isBlank() ? "PAUSED" : pausedText;
 		dst.recordingColor = recordingColor;
-		// Position is written only from the numeric fields or HUD drag (never inferred).
-		dst.positionX = positionX;
-		dst.positionY = positionY;
+		// Position and scale are owned by the OneConfig HUD, never by this config.
 		dst.obsHost = obsHost;
 		dst.obsPort = obsPort;
 		dst.obsPassword = obsPassword == null ? "" : obsPassword;
