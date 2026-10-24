@@ -41,14 +41,24 @@ dependencies {
 	// Optional — compileOnly so the jar never requires OneConfig at runtime.
 	// Extracted API modules from OneConfig 1.2.0 (26.3 Fabric). Not bundled into the mod jar.
 	// "hud" provides the HUD API (the indicator is a OneConfig HUD when OneConfig is installed),
-	// "26.3-fabric" is OneConfig's platform module, which is where LegacyHud lives.
+	// "26.3-fabric" is OneConfig's platform module for Minecraft 26.3, the version this mod targets,
+	// "poly-compose" supplies PolyColor, the colour type OneConfig colour options use.
 	compileOnly files(
 		"libs/oneconfig-config-1.2.0.jar",
 		"libs/oneconfig-config-impl-1.2.0.jar",
 		"libs/oneconfig-hud-1.2.0.jar",
 		"libs/oneconfig-26.3-fabric-1.2.0.jar",
-		"libs/kotlin-stdlib-2.1.0.jar"
+		"libs/kotlin-stdlib-2.1.0.jar",
+		"libs/poly-compose-1.2.0.jar"
 	)
+
+	// Hud.Content() takes an androidx.compose.runtime.Composer, so that one type has to be on the
+	// compile classpath. OneConfig ships the compose runtime itself at runtime; this is compileOnly
+	// so nothing of it is ever bundled into the mod jar.
+	// No transitives: only the Compose interfaces are needed to compile against, never to run.
+	compileOnly("org.jetbrains.compose.runtime:runtime-desktop:1.8.2") {
+		transitive = false
+	}
 }
 
 processResources {

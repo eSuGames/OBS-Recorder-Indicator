@@ -53,7 +53,7 @@ public final class ObsRecIndicatorClient implements ClientModInitializer {
 			}
 		});
 
-		LOGGER.info("OBS Rec Indicator initialized (OBS {}:{})",
+		LOGGER.info("OBS Recorder Indicator initialized (OBS {}:{})",
 			ConfigManager.get().obsHost, ConfigManager.get().obsPort);
 	}
 

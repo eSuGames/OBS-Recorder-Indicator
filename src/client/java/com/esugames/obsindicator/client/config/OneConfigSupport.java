@@ -1,6 +1,8 @@
 package com.esugames.obsindicator.client.config;
 
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.locale.Language;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +22,18 @@ public final class OneConfigSupport {
 	private static Boolean present;
 	private static boolean configRegistered;
 	private static boolean hudRegistered;
+	private static boolean hudDrawingFailed;
+	private static java.lang.reflect.Method refreshEditorLabels;
+	private static boolean refreshEditorLabelsFailed;
+	/**
+	 * One of the tab titles the HUD editor caches. Both the language instance and this title are
+	 * watched, so the change is noticed however Minecraft reloads its language files.
+	 */
+	private static final String WATCHED_TITLE = "obs_rec_indicator.oneconfig.hud.category";
+	/** Language resource set the HUD editor's tab titles were last built from. */
+	private static Object lastLanguage;
+	/** Tab title of {@link #WATCHED_TITLE} in that language. */
+	private static String lastTitle;
 
 	private OneConfigSupport() {
 	}
@@ -83,7 +97,56 @@ public final class OneConfigSupport {
 	 * fallback HUD.</p>
 	 */
 	public static boolean isHudRegistered() {
-		return hudRegistered;
+		return hudRegistered && !hudDrawingFailed;
+	}
+
+	/**
+	 * Marks OneConfig's HUD drawing as unusable.
+	 *
+	 * <p>Called by the HUD when it cannot attach its drawing node. The indicator then falls back to
+	 * the mod's own Fabric HUD — the position comes from the mod's config again, but the indicator
+	 * stays visible instead of silently disappearing.</p>
+	 */
+	public static void markHudDrawingFailed() {
+		hudDrawingFailed = true;
+	}
+
+	/**
+	 * Rebuilds the HUD editor's settings panel after Minecraft's language changed.
+	 *
+	 * <p>OneConfig translates the tab titles of a HUD's settings page once, when that page is built,
+	 * and keeps them for as long as it stays composed — so switching the language in-game used to
+	 * leave the tabs ("Display"/"Text") in the old language until the game was restarted. The panel
+	 * is thrown away and built again here instead, which is what makes the new language show up
+	 * without a restart.</p>
+	 *
+	 * <p>Called once per client tick and costs one reference comparison until the language actually
+	 * changes.</p>
+	 */
+	public static void tickHudEditorLanguage() {
+		if (!isPresent() || !hudRegistered || refreshEditorLabelsFailed) {
+			return;
+		}
+		try {
+			Object language = Language.getInstance();
+			String title = I18n.get(WATCHED_TITLE);
+			if (language == lastLanguage && title.equals(lastTitle)) {
+				return;
+			}
+			// The first tick also rebuilds: OneConfig may have warmed the settings panel up
+			// before Minecraft had its language files, which would leave raw keys on the tabs.
+			lastLanguage = language;
+			lastTitle = title;
+			if (refreshEditorLabels == null) {
+				Class<?> clazz = Class.forName(
+					"com.esugames.obsindicator.client.config.RecordingIndicatorHud");
+				refreshEditorLabels = clazz.getMethod("refreshEditorLabels");
+			}
+			refreshEditorLabels.invoke(null);
+		} catch (Throwable t) {
+			refreshEditorLabelsFailed = true;
+			LOGGER.debug("HUD editor tab titles are not refreshed on language changes: {}", t.toString());
+		}
 	}
 
 	public static void syncFromOneConfigIfChanged() {

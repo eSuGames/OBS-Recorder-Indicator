@@ -2,10 +2,10 @@
 	"schemaVersion": 1,
 	"id": "obs_rec_indicator",
 	"version": "${version}",
-	"name": "OBS Rec Indicator",
+	"name": "OBS Recorder Indicator",
 	"description": "Shows an in-game recording indicator driven by OBS Studio WebSocket 5.x.",
 	"authors": [
-		"OBS Rec Indicator contributors"
+		"OBS Recorder Indicator contributors"
 	],
 	"contact": {
 		"sources": "https://example.invalid/obs-rec-indicator",

@@ -98,23 +98,37 @@ public final class RecordingHudOverlay {
 	}
 
 	public static Metrics metrics(Minecraft minecraft, ModConfig config, String label, float scale) {
-		boolean showCircle = config.showCircle;
-		boolean showText = config.showText && label != null && !label.isEmpty();
+		return metrics(minecraft, config.showCircle, config.showText, config.circleRadius, label, scale);
+	}
+
+	/**
+	 * Same as {@link #metrics(Minecraft, ModConfig, String, float)} but with the display options
+	 * passed in, so a OneConfig HUD instance can measure itself from its own per-instance options.
+	 */
+	public static Metrics metrics(
+		Minecraft minecraft,
+		boolean showCircleOption,
+		boolean showTextOption,
+		float circleRadius,
+		String label,
+		float scale
+	) {
+		boolean showText = showTextOption && label != null && !label.isEmpty();
 
 		int fontH = minecraft.font.lineHeight;
 		int fontW = showText ? minecraft.font.width(label) : 0;
 		// Text follows the same scale as the circle so the pair stays proportional.
 		int textWidth = showText ? Math.max(1, Math.round(fontW * scale)) : 0;
 		int textHeight = showText ? Math.max(1, Math.round(fontH * scale)) : 0;
-		int radius = showCircle ? Math.max(1, Math.round(config.circleRadius * scale)) : 0;
+		int radius = showCircleOption ? Math.max(1, Math.round(circleRadius * scale)) : 0;
 		// Tighter gap at large scales so the circle and text stay close.
-		int gap = showText && showCircle ? Math.max(2, Math.round(1.5f * scale)) : 0;
+		int gap = showText && showCircleOption ? Math.max(2, Math.round(1.5f * scale)) : 0;
 		int padding = Math.max(2, Math.round(3 * scale));
 
-		int circleBlock = showCircle ? radius * 2 + (textWidth > 0 ? gap : 0) : 0;
+		int circleBlock = showCircleOption ? radius * 2 + (textWidth > 0 ? gap : 0) : 0;
 		int contentWidth = circleBlock + textWidth;
-		int contentHeight = Math.max(showCircle ? radius * 2 : 0, showText ? textHeight : 0);
-		return new Metrics(scale, showCircle, showText, textWidth, textHeight, radius, gap, padding,
+		int contentHeight = Math.max(showCircleOption ? radius * 2 : 0, showText ? textHeight : 0);
+		return new Metrics(scale, showCircleOption, showText, textWidth, textHeight, radius, gap, padding,
 			contentWidth, contentHeight);
 	}
 
@@ -154,11 +168,31 @@ public final class RecordingHudOverlay {
 		int originX,
 		int originY
 	) {
+		drawAt(graphics, minecraft, config.showBackground, config.showShadow, label, color, metrics,
+			originX, originY);
+	}
+
+	/**
+	 * Same as {@link #drawAt(GuiGraphicsExtractor, Minecraft, ModConfig, String, int, Metrics, int, int)}
+	 * but with the display options passed in, so a OneConfig HUD instance draws itself from its own
+	 * per-instance options.
+	 */
+	public static void drawAt(
+		GuiGraphicsExtractor graphics,
+		Minecraft minecraft,
+		boolean drawBackground,
+		boolean drawShadow,
+		String label,
+		int color,
+		Metrics metrics,
+		int originX,
+		int originY
+	) {
 		if (metrics.contentWidth() <= 0 || metrics.contentHeight() <= 0) {
 			return;
 		}
 
-		if (config.showBackground) {
+		if (drawBackground) {
 			graphics.fill(originX - metrics.padding(), originY - metrics.padding(),
 				originX + metrics.contentWidth() + metrics.padding(),
 				originY + metrics.contentHeight() + metrics.padding(), 0x66000000);
@@ -183,7 +217,7 @@ public final class RecordingHudOverlay {
 			if (metrics.scale() != 1.0f) {
 				pose.scale(metrics.scale(), metrics.scale());
 			}
-			graphics.text(minecraft.font, label, 0, -4, textColor, config.showShadow);
+			graphics.text(minecraft.font, label, 0, -4, textColor, drawShadow);
 			pose.popMatrix();
 		}
 	}

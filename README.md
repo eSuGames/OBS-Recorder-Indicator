@@ -74,24 +74,32 @@ Without OneConfig, these are also available:
 
 インジケーターは OneConfig の HUD として登録されます。
 
-- OneConfig の **HUD エディター** でインジケーターをドラッグして位置を変更
+- OneConfig の **HUD エディター** でインジケーターをドラッグして位置を変更(タイトル画面から HUD エディターを開いた場合も同じように動かせます)
 - 同じ設定画面の **Scale** でサイズを変更
-- 同じ設定画面に **背景 / 影 / 丸 / 文字** の切り替えスイッチがあります
+- 同じ設定画面に **インジケーターの丸 / 文字 / 録画中のテキスト / 録画停止中のテキスト / 録画中のインジケーターの色** が 1 つのリストで並びます(タブはありません)
+- **背景** と **影** は OneConfig 標準の項目(**Background** / **Appearance** セクション)で設定します(インジケーターは他の HUD と同じ影で描画されます)
+- 各項目名は Minecraft の言語に追従します(言語を切り替えるとその場で切り替わります)
 - 位置とサイズは OneConfig 側に保存されます
-- 複製するとインジケーターを複数置けます(位置・サイズ・表示/非表示は 1 個ずつ)
+- 複製するとインジケーターを複数置けます(位置・サイズ・表示/非表示・見た目は 1 個ずつ)
 - **Delete HUD**(HUD 設定の最下部、または HUD の右クリックメニュー)は押したインジケーターだけを削除します
   - 他のインジケーターには影響しません
   - すべて削除するとインジケーターは消えたままになり、再起動しても復活しません
-  - 戻すときは OneConfig の **HUD ライブラリ** から「OBS Rec Indicator」を追加してください
-- 背景 / 影 / 丸 / 文字 の設定は mod の設定ファイル(`config/obs_rec_indicator.json`)に保存され、すべてのインジケーターで共通です
+  - 戻すときは OneConfig の **HUD ライブラリ** から「OBS Recorder Indicator」を追加してください
+- 表示とテキストの設定はインジケーターごとに OneConfig が保存します(最初の 1 個の値は `config/obs_rec_indicator.json` にも書き戻されます)
+- OBS の接続設定だけは **OBS** タブにまとまっていて、すべてのインジケーターで共通です
 
-EN: The indicator is a OneConfig HUD. Drag it in OneConfig's **HUD editor** to move it, change the
-size with **Scale**, and toggle **Background / Shadow / Circle / Text** on the same settings page.
+EN: The indicator is a OneConfig HUD. Drag it in OneConfig's **HUD editor** to move it (also when the
+editor is opened from the title screen), change the size with **Scale**, and edit **Indicator Circle /
+Text / Recording text / Paused text / Recording Indicator color** in one list on the same settings page
+(no tabs). **Background** and **Shadow** are OneConfig's own options, in its **Background** and
+**Appearance** sections — the shadow is the ordinary Minecraft glyph shadow every other HUD uses.
+The option names follow Minecraft's language and switch over immediately when it is changed.
 Position and size are stored by OneConfig. Duplicate it to place several indicators (each keeps its
-own position, scale and visibility), and use **Delete HUD** (bottom of the HUD settings or the
+own position, scale, visibility and look), and use **Delete HUD** (bottom of the HUD settings or the
 right-click menu) to remove just that one indicator. Deleting every copy keeps it deleted across
-restarts; add it back from OneConfig's **HUD library**. The Background / Shadow / Circle / Text
-switches are shared by every copy and live in the mod's own config file.
+restarts; add it back from OneConfig's **HUD library**. The display and text options are stored per
+indicator by OneConfig (the first copy also writes them back into the mod's own config file); only
+the OBS connection settings are shared in the **OBS** tab.
 
 ### OneConfig を導入していない場合 / Without OneConfig
 
@@ -99,10 +107,10 @@ switches are shared by every copy and live in the mod's own config file.
 
 Origin is the screen center. +X right, +Y down.
 
-- 内蔵 Config を開き、ボタン以外の場所をドラッグ(プレビューが追従)、または X / Y を直接入力
+- 内蔵 Config を開き、インジケーターをドラッグ(プレビューが追従)、または X / Y を直接入力
 - サイズ: `-0.5` / `-0.25` / `1.00x` / `+0.25` / `+0.5`
 
-Open the built-in config and drag anywhere that is not a button (the preview follows the mouse), or type X / Y directly.
+Open the built-in config and drag the indicator itself (the preview follows the mouse), or type X / Y directly.
 
 ## 設定ファイル / Config
 

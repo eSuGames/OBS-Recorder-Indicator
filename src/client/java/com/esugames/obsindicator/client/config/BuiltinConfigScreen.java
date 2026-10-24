@@ -18,14 +18,16 @@ import java.util.List;
 /**
  * Built-in config screen, used when OneConfig is not installed.
  *
- * <p>The window is a position preview: drag the indicator (or any free area of the screen) to move
- * it. Only the widgets themselves — buttons and text boxes — swallow a click; everywhere else starts
- * a drag. That matters because at a large GUI scale the settings panel covers almost the whole
- * screen, so a "drag outside the panel" rule would leave no usable drag area at all.</p>
+ * <p>The window is a position preview: drag the indicator itself to move it. Only the indicator
+ * starts a drag, so clicking anywhere else — the panel background or an empty area of the screen —
+ * does nothing and can never move the indicator by accident. Widgets keep their own clicks.</p>
  *
  * <p>Origin (0,0) is the screen center. +X = right, +Y = down. While this screen is open the normal
  * in-game indicator is hidden, so the preview is the only indicator on screen and follows the
  * mouse exactly.</p>
+ *
+ * <p>Edits are kept when the screen is closed with Escape, exactly as if Save had been pressed.
+ * Cancel is the only way out that discards them.</p>
  */
 public final class BuiltinConfigScreen extends Screen {
 	private static final Logger LOGGER = LoggerFactory.getLogger("obs_rec_indicator");
@@ -41,6 +43,8 @@ public final class BuiltinConfigScreen extends Screen {
 	private static final int PRIMARY_BUTTON = 1;
 	/** Zero-based numbering used by older versions; unused in 26.3. */
 	private static final int LEGACY_PRIMARY_BUTTON = 0;
+	/** Extra pixels around the previewed indicator that still start a drag. */
+	private static final int GRAB_MARGIN = 4;
 
 	private final Screen parent;
 	private final ModConfig draft;
@@ -56,6 +60,10 @@ public final class BuiltinConfigScreen extends Screen {
 	private EditBox colorBox;
 
 	private boolean dragging;
+	/** Set by Cancel so closing does not save the edits. */
+	private boolean discarding;
+	/** Set once the screen is on its way out, so the save above happens exactly once. */
+	private boolean closed;
 	/** Set once so a support log line shows whether clicks actually reach this screen. */
 	private boolean toldAboutDrag;
 	/** Cursor position minus the indicator origin at the moment the drag started. */
@@ -216,17 +224,17 @@ public final class BuiltinConfigScreen extends Screen {
 		this.addRenderableWidget(passwordBox);
 		y += 28;
 
+		// Save and Escape both go through onClose(), which writes the edits out; Cancel is the
+		// only button that throws them away.
 		this.addRenderableWidget(Button.builder(tr("obs_rec_indicator.gui.save"), b -> {
-			pullFields();
-			ConfigManager.get().applyFrom(draft);
-			ConfigManager.save();
-			LOGGER.info("Built-in config saved: position=({}, {}) scale={}",
-				draft.positionX, draft.positionY, draft.scale);
+			discarding = false;
 			this.onClose();
 		}).bounds(left, y, w, 20).build());
 
-		this.addRenderableWidget(Button.builder(tr("obs_rec_indicator.gui.cancel"), b -> this.onClose())
-			.bounds(right, y, w, 20).build());
+		this.addRenderableWidget(Button.builder(tr("obs_rec_indicator.gui.cancel"), b -> {
+			discarding = true;
+			this.onClose();
+		}).bounds(right, y, w, 20).build());
 	}
 
 	@Override
@@ -388,22 +396,37 @@ public final class BuiltinConfigScreen extends Screen {
 			&& (event.button() == PRIMARY_BUTTON || event.button() == LEGACY_PRIMARY_BUTTON);
 	}
 
+	/**
+	 * Whether the cursor is on the previewed indicator.
+	 *
+	 * <p>The hit box gets a small margin so the indicator stays easy to grab when it is only a few
+	 * pixels across.</p>
+	 */
+	private boolean isOnIndicator(double mouseX, double mouseY) {
+		RecordingHudOverlay.Metrics metrics = metrics();
+		if (metrics == null || metrics.contentWidth() <= 0 || metrics.contentHeight() <= 0) {
+			return false;
+		}
+		int padding = metrics.padding() + GRAB_MARGIN;
+		int originX = previewOriginX();
+		int originY = previewOriginY(metrics);
+		return mouseX >= originX - padding
+			&& mouseX < originX + metrics.contentWidth() + padding
+			&& mouseY >= originY - padding
+			&& mouseY < originY + metrics.contentHeight() + padding;
+	}
+
 	@Override
 	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-		// Widgets (buttons, text boxes) keep their own clicks; anything else starts a drag.
-		if (isPrimaryButton(event) && this.getChildAt(event.x(), event.y()).isEmpty()) {
+		// Only the indicator itself starts a drag; widgets and the empty screen keep their clicks.
+		if (isPrimaryButton(event)
+			&& this.getChildAt(event.x(), event.y()).isEmpty()
+			&& isOnIndicator(event.x(), event.y())) {
 			beginDrag(event.x(), event.y());
 			dragTo(event.x(), event.y());
 			return true;
 		}
-		boolean handled = super.mouseClicked(event, doubleClick);
-		if (!handled && isPrimaryButton(event)) {
-			// Nothing under the cursor wanted the click, so do not drop it.
-			beginDrag(event.x(), event.y());
-			dragTo(event.x(), event.y());
-			return true;
-		}
-		return handled;
+		return super.mouseClicked(event, doubleClick);
 	}
 
 	@Override
@@ -430,12 +453,35 @@ public final class BuiltinConfigScreen extends Screen {
 		return super.mouseReleased(event);
 	}
 
+	/**
+	 * Closes the screen, saving first.
+	 *
+	 * <p>Escape lands here, so closing with Escape behaves exactly like pressing Save: the
+	 * widgets are read back and the config is written. Only Cancel skips the save, which is what
+	 * that button promises.</p>
+	 */
 	@Override
 	public void onClose() {
+		if (closed) {
+			return;
+		}
+		closed = true;
+		if (!discarding) {
+			applyAndSaveDraft();
+		}
 		dragging = false;
 		RecordingHudOverlay.setScreenPreviewActive(false);
 		if (this.minecraft != null) {
 			this.minecraft.gui.setScreen(this.parent);
 		}
+	}
+
+	/** Reads the widgets back into the draft config and writes it to disk. */
+	private void applyAndSaveDraft() {
+		pullFields();
+		ConfigManager.get().applyFrom(draft);
+		ConfigManager.save();
+		LOGGER.info("Built-in config saved: position=({}, {}) scale={}",
+			draft.positionX, draft.positionY, draft.scale);
 	}
 }

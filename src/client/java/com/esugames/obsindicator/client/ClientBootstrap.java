@@ -66,6 +66,8 @@ public final class ClientBootstrap {
 		while (toggleIndicatorKey != null && toggleIndicatorKey.consumeClick()) {
 			toggleEnabled();
 		}
+		// Keeps the title-screen preview in OneConfig's HUD editor installed (no-op without OneConfig).
+		OneConfigSupport.tickHudEditorLanguage();
 	}
 
 	private static void registerCommands() {
