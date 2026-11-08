@@ -169,6 +169,17 @@ public final class RecordingIndicatorHud extends Hud {
 	private String lastPausedText = "";
 	private int lastColor;
 
+	/**
+	 * Hash of everything the indicator's pixels depend on that OneConfig cannot see by itself.
+	 *
+	 * <p>OneConfig caches the whole HUD pass and only draws it again when a Compose state read by
+	 * the draw pass changed, when the layout/order changed, or when the editor is open. The
+	 * recording state comes from OBS and most of the mod's display settings are plain fields, so
+	 * changing them changes the indicator without touching any of those states. Opening the
+	 * OneConfig GUI used to be what forced a redraw for exactly that reason.</p>
+	 */
+	private int lastVisualHash;
+
 	public RecordingIndicatorHud() {
 		super(HUD_ID, TITLE, Hud.Category.getINFO());
 		// The background is OneConfig's own option, so it starts at the colour and shape the mod
@@ -177,6 +188,7 @@ public final class RecordingIndicatorHud extends Hud {
 		setBgRadius(0.0f);
 		seedFromRuntime();
 		rememberValues();
+		lastVisualHash = visualHash();
 	}
 
 	/**
@@ -304,6 +316,17 @@ public final class RecordingIndicatorHud extends Hud {
 		CanvasNode node = ensureNode();
 		if (node != null) {
 			resizeNode(node);
+		}
+
+		// OneConfig keeps the last HUD pass cached and redraws it only when it notices a change
+		// (Compose state, layout, editor). The recording state and the mod's own display options
+		// are not Compose state, so tell OneConfig explicitly whenever the pixels would differ.
+		// Without this the indicator stays at the state of the last forced redraw, which is why
+		// opening the OneConfig GUI made it appear.
+		int visualHash = visualHash();
+		if (visualHash != lastVisualHash) {
+			lastVisualHash = visualHash;
+			HudManager.invalidate();
 		}
 
 		if (!isPrimary(this)) {
@@ -681,6 +704,38 @@ public final class RecordingIndicatorHud extends Hud {
 		lastRecordingText = textOrDefault(recordingText);
 		lastPausedText = textOrDefault(pausedText);
 		lastColor = colorArgb();
+	}
+
+	/**
+	 * Hash of every value {@link #paint} and the node measurement use that OneConfig does not
+	 * observe as Compose state.
+	 *
+	 * <p>Compose-backed options (background, colours, chroma, shadow) are read by the draw pass
+	 * and are observed by OneConfig already; they are included here as well so the indicator is
+	 * also redrawn when they change outside the draw pass.</p>
+	 */
+	private int visualHash() {
+		ModConfig config = ConfigManager.get();
+		RecordState state = currentState();
+		int h = state == null ? 0 : state.ordinal();
+		h = 31 * h + (config.enabled ? 1 : 0);
+		h = 31 * h + (drawCircle ? 1 : 0);
+		h = 31 * h + (drawText ? 1 : 0);
+		h = 31 * h + textOrDefault(recordingText).hashCode();
+		h = 31 * h + textOrDefault(pausedText).hashCode();
+		h = 31 * h + colorArgb();
+		h = 31 * h + config.pausedColorArgb();
+		h = 31 * h + Float.floatToIntBits(config.circleRadius);
+		h = 31 * h + (getShowBackground() ? 1 : 0);
+		h = 31 * h + getBgColor();
+		h = 31 * h + (getBgChroma() ? 1 : 0);
+		h = 31 * h + Float.floatToIntBits(getBgChromaSpeed());
+		h = 31 * h + Float.floatToIntBits(getBgRadius());
+		h = 31 * h + getTextColor();
+		h = 31 * h + (getTextChroma() ? 1 : 0);
+		h = 31 * h + Float.floatToIntBits(getTextChromaSpeed());
+		h = 31 * h + (getShowShadow() ? 1 : 0);
+		return h;
 	}
 
 	private static String textOrDefault(String value) {
