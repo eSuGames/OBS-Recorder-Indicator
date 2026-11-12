@@ -738,7 +738,12 @@ public final class RecordingIndicatorHud extends Hud {
 					showText = false;
 				}
 			} else {
-				textWidth = McFontQueue.INSTANCE.measureTextWidth(measured, textScale);
+				// Measured line by line, exactly like McTextNode does, so the box matches what
+				// the node draws.
+				for (String line : lines) {
+					textWidth = Math.max(textWidth,
+						McFontQueue.INSTANCE.measureTextWidth(line, textScale));
+				}
 				textHeight = McFontQueue.INSTANCE.measureBlockHeight(lines.size(), textScale);
 			}
 		}

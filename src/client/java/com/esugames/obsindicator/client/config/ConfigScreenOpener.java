@@ -34,7 +34,7 @@ public final class ConfigScreenOpener {
 				return;
 			}
 			try {
-				minecraft.gui.setScreen(new BuiltinConfigScreen(minecraft.gui.screen()));
+				minecraft.setScreen(new BuiltinConfigScreen(minecraft.screen));
 			} catch (Throwable t) {
 				LOGGER.error("Failed to open builtin config screen", t);
 			}

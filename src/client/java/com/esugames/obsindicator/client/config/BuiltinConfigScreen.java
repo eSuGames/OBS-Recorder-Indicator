@@ -472,7 +472,7 @@ public final class BuiltinConfigScreen extends Screen {
 		dragging = false;
 		RecordingHudOverlay.setScreenPreviewActive(false);
 		if (this.minecraft != null) {
-			this.minecraft.gui.setScreen(this.parent);
+			this.minecraft.setScreen(this.parent);
 		}
 	}
 

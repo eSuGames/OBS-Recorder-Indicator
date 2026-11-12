@@ -35,13 +35,13 @@ public final class ClientBootstrap {
 		int unbound = InputConstants.UNKNOWN.getValue();
 		openConfigKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
 			"key.obs_rec_indicator.open_config",
-			InputConstants.Type.KEYBOARD,
+			InputConstants.Type.KEYSYM,
 			unbound,
 			category
 		));
 		toggleIndicatorKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
 			"key.obs_rec_indicator.toggle_indicator",
-			InputConstants.Type.KEYBOARD,
+			InputConstants.Type.KEYSYM,
 			unbound,
 			category
 		));
