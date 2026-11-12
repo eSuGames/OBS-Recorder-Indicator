@@ -1,12 +1,12 @@
 {
 	"required": true,
 	"package": "com.esugames.obsindicator.mixin.client",
-	"compatibilityLevel": "JAVA_8",
+	"compatibilityLevel": "JAVA_21",
 	"client": [
-		"ClientMixins$InGameHudMixin",
-		"ClientMixins$ClientPlayerEntityMixin"
+		"GameGuiMixin",
+		"LocalClientPlayerEntityMixin"
 	],
 	"injectors": {
-		"defaultRequire": 0
+		"defaultRequire": 1
 	}
 }

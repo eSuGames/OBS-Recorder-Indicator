@@ -2,10 +2,10 @@
 	"schemaVersion": 1,
 	"id": "obs_rec_indicator",
 	"version": "${version}",
-	"name": "OBS Rec Indicator",
+	"name": "OBS Recorder Indicator",
 	"description": "Shows an in-game recording indicator driven by OBS Studio WebSocket 5.x.",
 	"authors": [
-		"OBS Rec Indicator contributors"
+		"OBS Recorder Indicator contributors"
 	],
 	"contact": {
 		"sources": "https://example.invalid/obs-rec-indicator",
@@ -24,11 +24,16 @@
 			"environment": "client"
 		}
 	],
+	"jars": [
+		{
+			"file": "META-INF/jars/slf4j-api.jar"
+		}
+	],
 	"depends": {
-		"fabricloader": ">=0.12.0",
+		"fabricloader": ">=0.19.5",
 		"minecraft": "1.8.9",
 		"java": ">=21",
-		"oneconfigv1": "*"
+		"oneconfig": "*"
 	},
 	"icon": "assets/obs_rec_indicator/icon.png"
 }

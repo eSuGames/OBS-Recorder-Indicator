@@ -1,15 +1,16 @@
 package com.esugames.obsindicator.client;
 
 import com.esugames.obsindicator.client.config.ConfigScreenOpener;
-import com.esugames.obsindicator.client.config.OneConfigSupport;
 import com.esugames.obsindicator.config.ConfigManager;
 
-/** Chat / client-command handlers for 1.8.9. */
+/**
+ * Chat command handlers for 1.8.9 ({@code /obsindicator ...} typed in chat).
+ *
+ * <p>1.8.9 has no client command API, so the chat mixin hands every message starting with
+ * {@code /obsindicator} here instead of sending it to the server.</p>
+ */
 public final class ClientBootstrap {
 	private ClientBootstrap() {
-	}
-
-	public static void init() {
 	}
 
 	/** @return true if the message was an /obsindicator command (handled). */
@@ -43,7 +44,8 @@ public final class ClientBootstrap {
 					runPosition(null, null);
 				}
 			}
-			default -> ObsRecIndicatorClient.feedback("Usage: /obsindicator [config|toggle|status|reconnect|textonly|position]");
+			default -> ObsRecIndicatorClient.feedback(
+				"Usage: /obsindicator [config|toggle|status|reconnect|textonly|position]");
 		}
 		return true;
 	}
@@ -95,7 +97,7 @@ public final class ClientBootstrap {
 		if (x == null || y == null) {
 			ObsRecIndicatorClient.feedback("Position X=" + ConfigManager.get().positionX
 				+ " Y=" + ConfigManager.get().positionY
-				+ "  (set via OneConfig X/Y or /obsindicator position <x> <y>)");
+				+ "  (set via OneConfig's HUD editor or /obsindicator position <x> <y>)");
 			return 1;
 		}
 		ConfigManager.get().positionX = x;

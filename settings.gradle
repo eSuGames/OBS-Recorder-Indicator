@@ -5,10 +5,6 @@ pluginManagement {
 			url = 'https://maven.fabricmc.net/'
 		}
 		maven {
-			name = 'LegacyFabric'
-			url = 'https://maven.legacyfabric.net/'
-		}
-		maven {
 			name = 'Ornithe'
 			url = 'https://maven.ornithemc.net/releases'
 		}
@@ -17,4 +13,4 @@ pluginManagement {
 	}
 }
 
-rootProject.name = 'obs-rec-indicator-ornithe'
+rootProject.name = 'obs-rec-indicator'

@@ -1,10 +1,16 @@
 package com.esugames.obsindicator.client.config;
 
-import com.esugames.obsindicator.client.McReflect;
 import com.esugames.obsindicator.client.ObsRecIndicatorClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Opens the mod's settings page in OneConfig's GUI.
+ *
+ * <p>1.8.9 has no built-in config screen of its own: OneConfig is required here (see
+ * fabric.mod.json), so this only routes to OneConfig's mod page. Everything else — the indicator's
+ * font, shadow, background and position — is edited in OneConfig's HUD editor.</p>
+ */
 public final class ConfigScreenOpener {
 	private static final Logger LOGGER = LoggerFactory.getLogger("obs_rec_indicator");
 	private static final String MOD_CONFIG_ID = "obs_rec_indicator";
@@ -18,26 +24,13 @@ public final class ConfigScreenOpener {
 
 	public static void open() {
 		OneConfigSupport.registerIfPresent();
+		OneConfigSupport.registerHudIfPresent();
 		if (OneConfigSupport.isPresent() && tryOpenOneConfigModPage()) {
 			return;
 		}
-		try {
-			Class<?> screenCl = Class.forName("com.esugames.obsindicator.client.config.BuiltinConfigScreen");
-			Object parent = McReflect.currentScreen();
-			Object screen = screenCl.getConstructor(Class.forName("net.minecraft.client.gui.screen.Screen"))
-				.newInstance(parent);
-			// fall back to any GuiScreen-typed ctor
-			McReflect.openScreen(screen);
-		} catch (Throwable t) {
-			LOGGER.debug("builtin config screen unavailable: {}", t.toString());
-			ObsRecIndicatorClient.feedback("Config UI unavailable (Ornithe remap). Use /obsindicator toggle|status|position");
-		}
-	}
-
-	public static void openPositionEditor() {
-		com.esugames.obsindicator.config.ConfigManager.get().resetPosition();
-		com.esugames.obsindicator.config.ConfigManager.save();
-		ObsRecIndicatorClient.feedback("Position reset");
+		LOGGER.debug("OneConfig config UI unavailable");
+		ObsRecIndicatorClient.feedback(
+			"OneConfig is required on 1.8.9. Install it, or use /obsindicator toggle|status|position");
 	}
 
 	private static boolean tryOpenOneConfigModPage() {

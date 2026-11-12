@@ -1,5 +1,8 @@
 plugins {
+	// The classic 'fabric-loom' plugin id (not 'net.fabricmc.fabric-loom', which switches Loom
+	// into its non-obfuscated mode for modern Minecraft versions).
 	id 'fabric-loom' version "${loom_version}"
+	id 'ploceus' version "${ploceus_version}"
 }
 
 version = project.mod_version
@@ -11,10 +14,6 @@ base {
 
 repositories {
 	mavenCentral()
-	maven {
-		name = 'LegacyFabric'
-		url = 'https://maven.legacyfabric.net/'
-	}
 	maven {
 		name = 'Ornithe'
 		url = 'https://maven.ornithemc.net/releases'
@@ -29,24 +28,59 @@ loom {
 	}
 }
 
+ploceus {
+	// Calamus gen2 intermediary, the same generation OneConfig 1.8.9 ships with.
+	intermediaryGeneration = 2
+}
+
+// slf4j is not part of the 1.8.9 runtime (Minecraft 1.8.9 predates it), so the mod
+// nests slf4j-api as a plain library jar the same way OneConfig nests its libraries.
+configurations {
+	nestedJar
+	implementation.extendsFrom(nestedJar)
+}
+
 dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.legacyfabric:yarn:1.8.9+build.604:v2"
+	mappings ploceus.featherMappings("${project.feather_build}")
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	implementation "org.slf4j:slf4j-api:2.0.17"
 
+	nestedJar "org.slf4j:slf4j-api:2.0.17"
+
+	// Optional at runtime only in theory — this build requires OneConfig (see fabric.mod.json),
+	// but compileOnly keeps its classes out of the mod jar.
+	// Extracted API modules from OneConfig 1.7.0 (1.8.9 Ornithe). Not bundled into the mod jar.
+	// "hud" provides the HUD API (the indicator is a OneConfig HUD), "poly-compose" supplies
+	// PolyColor / PolyFont / the text renderers the font and shadow customizations draw through.
 	compileOnly files(
-		"libs/oneconfig-config-1.2.4.jar",
-		"libs/oneconfig-config-impl-1.2.4.jar",
-		"libs/asm-9.10.1.jar",
-		"libs/kotlin-stdlib-2.1.0.jar"
+		"libs/oneconfig-config-1.7.0.jar",
+		"libs/oneconfig-config-impl-1.7.0.jar",
+		"libs/oneconfig-hud-1.7.0.jar",
+		"libs/oneconfig-1.8.9-ornithe-1.7.0.jar",
+		"libs/kotlin-stdlib-2.1.0.jar",
+		"libs/poly-compose-1.7.0.jar"
 	)
+
+	// Hud.Content() takes an androidx.compose.runtime.Composer, so that one type has to be on the
+	// compile classpath. OneConfig ships the compose runtime itself at runtime; this is compileOnly
+	// so nothing of it is ever bundled into the mod jar.
+	// No transitives: only the Compose interfaces are needed to compile against, never to run.
+	compileOnly("org.jetbrains.compose.runtime:runtime-desktop:1.8.2") {
+		transitive = false
+	}
 }
 
 processResources {
 	inputs.property "version", project.version
+
 	filesMatching("fabric.mod.json") {
 		expand "version": project.version
+	}
+
+	// Nested as META-INF/jars/slf4j-api.jar and declared in fabric.mod.json's "jars".
+	from(configurations.nestedJar) {
+		into "META-INF/jars"
+		rename { "slf4j-api.jar" }
 	}
 }
 
@@ -59,4 +93,10 @@ java {
 	withSourcesJar()
 	sourceCompatibility = JavaVersion.VERSION_21
 	targetCompatibility = JavaVersion.VERSION_21
+}
+
+jar {
+	from("LICENSE") {
+		rename { "${it}_${project.base.archivesName.get()}" }
+	}
 }

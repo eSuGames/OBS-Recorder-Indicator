@@ -43,26 +43,38 @@ EN
 
 ## 必要なもの / Requirements
 
-- Minecraft
-- [Fabric Loader](https://fabricmc.net/use/installer/)
-- [Fabric API](https://modrinth.com/mod/fabric-api)
+- Minecraft 1.8.9 (Ornithe)
+- [Ornithe Loader / Fabric Loader](https://ornithemc.net/) 0.19.5+
+- [OneConfig](https://modrinth.com/mod/oneconfig)（**必須 / required**）
 - OBS Studio
 
 ※バージョン要件は時と場合によります。
 Version requirements may vary depending on the situation. 
 
+## 1.8.9 Ornithe版について / About the 1.8.9 Ornithe build
+
+- **OneConfig が必須です。** 設定はすべて OneConfig で行います（接続設定: OneConfig の Mod ページ、
+  表示・フォント・影・背景・位置: OneConfig の HUD エディター）。
+  OneConfig is **required**: connection settings live in OneConfig's mod page, and the indicator's
+  font, shadow, background and position are edited in OneConfig's HUD editor — including all of
+  OneConfig's HUD customizations.
+- 内蔵のバニラ風設定画面はありません（1.8.9 への移植では省略）。
+  There is no built-in config screen on this branch; it is dropped for the 1.8.9 port.
+- コマンドはチャットに `/obsindicator ...` と打ちます（1.8.9 にはクライアントコマンド API が
+  ないため）。 Commands are typed in chat because 1.8.9 has no client command API.
+- 鍵設定（キーバインド）はありません。
+  There are no key bindings on this branch.
+
 ## コマンド / Commands
 
 | コマンド / Command | 説明 / Description |
 |--------------------|--------------------|
-| `/obsindicator config` | 設定を開く / Open settings |
+| `/obsindicator config` | OneConfig の設定を開く / Open OneConfig settings |
 | `/obsindicator toggle` | 表示 ON/OFF / Toggle indicator |
 | `/obsindicator status` | 接続状態 / Connection status |
 | `/obsindicator reconnect` | OBS 再接続 / Reconnect to OBS |
 
-OneConfig を入れていない場合は次も使えます。
-
-Without OneConfig, these are also available:
+以下はいつでも使えます。 / These are also always available:
 
 - `/obsindicator textonly` — 文字のみ / Text only  
 - `/obsindicator position <x> <y>` — 位置 / Position  
