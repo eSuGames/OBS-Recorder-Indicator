@@ -2,7 +2,6 @@ package com.esugames.obsindicator.client.config;
 
 import com.esugames.obsindicator.RecordState;
 import com.esugames.obsindicator.client.ObsRecIndicatorClient;
-import com.esugames.obsindicator.client.hud.RecordingHudOverlay;
 import com.esugames.obsindicator.config.ConfigManager;
 import com.esugames.obsindicator.config.ModConfig;
 import androidx.compose.runtime.Composer;
@@ -10,16 +9,20 @@ import kotlin.Pair;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function5;
 import net.minecraft.client.Minecraft;
+import org.polyfrost.compose.layout.PolyAlign;
 import org.polyfrost.compose.layout.PolySize;
+import org.polyfrost.compose.mc.McFontQueue;
 import org.polyfrost.compose.node.CanvasNode;
 import org.polyfrost.compose.node.McTextNode;
 import org.polyfrost.compose.render.PolyColor;
+import org.polyfrost.compose.render.PolyFont;
 import org.polyfrost.compose.render.RenderContext;
 import org.polyfrost.oneconfig.api.config.v1.Node;
 import org.polyfrost.oneconfig.api.config.v1.Tree;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Color;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Switch;
 import org.polyfrost.oneconfig.api.config.v1.annotations.Text;
+import org.polyfrost.oneconfig.api.hud.v1.Font;
 import org.polyfrost.oneconfig.api.hud.v1.Hud;
 import org.polyfrost.oneconfig.api.hud.v1.HudManager;
 import org.polyfrost.oneconfig.api.hud.v1.HudResize;
@@ -27,6 +30,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -46,8 +52,8 @@ import java.util.Set;
  *
  * <p>The content is a single {@link CanvasNode}: OneConfig lays that node out like any other HUD
  * content, so the HUD's size, its box, the drag target and the measured bounds all come from
- * OneConfig, while the actual pixels are still drawn by this mod with the very same drawing code
- * the Fabric HUD uses. The node is attached once to the HUD's compose root
+ * OneConfig, while the actual pixels are still drawn by this mod with the very same circle drawing
+ * code the Fabric HUD uses. The node is attached once to the HUD's compose root
  * ({@link #ensureNode()}) and {@link #update()} keeps its size in step with the label, so no Kotlin
  * or compose source is needed for it.</p>
  *
@@ -56,15 +62,33 @@ import java.util.Set;
  * runtime config only provides the defaults for a newly created copy and is kept up to date from
  * the first (primary) copy, so removing OneConfig later keeps the last look.</p>
  *
- * <p>The background and the text shadow are OneConfig's own HUD options, so this mod declares no
- * switches for them: OneConfig's Background and Appearance sections edit {@code showBackground},
- * {@code bgColor}, {@code bgRadius} and {@code showShadow} directly, and drawing follows them. The
- * shadow is the vanilla glyph shadow — the same one every other OneConfig HUD with the Minecraft
- * font draws — because OneConfig's own texture-font path forwards its shadow switch to exactly
- * that.</p>
+ * <p><strong>OneConfig's own HUD customizations are all honored</strong> and painted here the same
+ * way OneConfig's own text HUDs paint them:</p>
+ * <ul>
+ *   <li><em>Font</em> — the Minecraft bitmap font (with {@code §l}/{@code §o}/{@code §n} styling)
+ *       or OneConfig's Poppins font, whose variant (thin/regular/medium/bold/black, italic) comes
+ *       from the Bold/Italic/Weight options exactly like {@code getPoppinsFontName()} spells it;</li>
+ *   <li><em>Text style</em> — scale, bold, italic, underline, weight and the case option
+ *       (unchanged / upper / lower);</li>
+ *   <li><em>Colours</em> — text colour with chroma and chroma speed;</li>
+ *   <li><em>Shadow</em> — on/off, drop shadow or full outline ("Full Shadow"), its colour with
+ *       chroma, and the drop shadow offsets. The Minecraft font's drop shadow is the vanilla glyph
+ *       shadow (OneConfig's own texture-font path forwards its shadow switch to exactly that) and
+ *       the full shadow is the outlined glyph path; Poppins draws the shadow with its own
+ *       offset/outline rules;</li>
+ *   <li><em>Background</em> — on/off, colour with chroma, corner radius;</li>
+ *   <li><em>Padding</em> — OneConfig's per-side padding replaces the mod's fixed 3px box padding;</li>
+ *   <li><em>Static size &amp; content alignment</em> — a fixed HUD box aligns the indicator inside
+ *       it with OneConfig's alignment picker.</li>
+ * </ul>
+ *
+ * <p>The text is laid out and drawn exactly like OneConfig's {@code TextHud}: the Poppins path
+ * uses the same font size ({@code 8 * textScale}), baseline and underline maths, and the Minecraft
+ * path goes through the same {@link McTextNode} with the same formatting codes, so the indicator
+ * and a neighbouring OneConfig text HUD always agree.</p>
  *
  * <p>Only loaded when OneConfig is installed (see {@link OneConfigSupport}). Without OneConfig the
- * Fabric HUD in {@link RecordingHudOverlay} is used exactly as before.</p>
+ * Fabric HUD in {@code RecordingHudOverlay} is used exactly as before.</p>
  *
  * <p>Several instances may exist at once: OneConfig duplicates the HUD (its "duplicate" action) and
  * each copy keeps its own position, scale, visibility and look. Deleting is per instance as well —
@@ -91,16 +115,13 @@ public final class RecordingIndicatorHud extends Hud {
 	 *
 	 * <p>OneConfig shows a tab row only when an HUD has two or more categories, so keeping them all
 	 * in one leaves a single flat list. That is what this HUD wants: the mod only contributes the
-	 * five options below — the background and the text shadow are OneConfig's own HUD options and
-	 * are edited in OneConfig's Background and Appearance sections.</p>
+	 * five options below — fonts, text style, colours, the shadow and the background are OneConfig's
+	 * own HUD options and are edited in OneConfig's Text and Background sections.</p>
 	 *
 	 * <p>The value is a translation key, OneConfig translates it when it exists. It is only used
 	 * as the group's name, never shown as a heading.</p>
 	 */
 	public static final String CATEGORY = "obs_rec_indicator.oneconfig.hud.category";
-
-	/** Vanilla line height of the Minecraft bitmap font, in unscaled pixels. */
-	private static final float FONT_LINE_HEIGHT = 9.0f;
 
 	/**
 	 * Background of the indicator, matching what the Fabric HUD draws. It is also OneConfig's own
@@ -108,11 +129,17 @@ public final class RecordingIndicatorHud extends Hud {
 	 */
 	private static final int DEFAULT_BACKGROUND_ARGB = 0x66000000;
 
+	/** OneConfig's Poppins text HUDs render at this size before the text scale is applied. */
+	private static final float POPPINS_BASE_SIZE = 8.0f;
+
+	/** Gap between the circle and the text when both are drawn, in unscaled pixels. */
+	private static final float CIRCLE_TEXT_GAP = 2.0f;
+
 	/**
 	 * Ids of the options this mod contributes to the HUD's config tree.
 	 *
 	 * <p>Everything else in that tree is OneConfig's own bookkeeping (position, scale, padding,
-	 * visibility, merge settings, …). Those are filtered out of the HUD editor's settings list by
+	 * font, shadow, visibility, …). Those are filtered out of the HUD editor's settings list by
 	 * {@link #addToSerialized(Tree)} so the editor only shows the options above — without that
 	 * they end up in an extra "General" group next to the mod's own options.</p>
 	 */
@@ -130,6 +157,8 @@ public final class RecordingIndicatorHud extends Hud {
 	/** Set once drawing turned out to be impossible, so it is not retried on every frame. */
 	private static boolean drawingFailed;
 	private static boolean drawErrorLogged;
+	/** {@code Hud.getFullShadow()} exists since OneConfig 1.5; older versions get a drop shadow only. */
+	private static Boolean fullShadowSupported;
 
 	// Every option shares one category, so the editor shows them as one flat list: the two
 	// drawing switches first, then the text options, with no tab row and no headings.
@@ -162,6 +191,10 @@ public final class RecordingIndicatorHud extends Hud {
 	private transient CanvasNode canvasNode;
 	private transient McTextNode textNode;
 
+	/** Cached Poppins font, rebuilt whenever the name or the size changes. */
+	private transient PolyFont poppinsFont;
+	private transient String poppinsFontKey;
+
 	/** Values the runtime config was last updated from/to, so only real edits are written back. */
 	private boolean lastCircle;
 	private boolean lastText;
@@ -186,6 +219,12 @@ public final class RecordingIndicatorHud extends Hud {
 		// itself used to draw with.
 		setBgColor(DEFAULT_BACKGROUND_ARGB);
 		setBgRadius(0.0f);
+		// OneConfig's per-side padding replaces the mod's old fixed 3px box padding, so a HUD that
+		// keeps its default padding looks exactly like it did before.
+		setPadLeft(3.0f);
+		setPadRight(3.0f);
+		setPadTop(3.0f);
+		setPadBottom(3.0f);
 		seedFromRuntime();
 		rememberValues();
 		lastVisualHash = visualHash();
@@ -315,7 +354,23 @@ public final class RecordingIndicatorHud extends Hud {
 	public boolean update() {
 		CanvasNode node = ensureNode();
 		if (node != null) {
-			resizeNode(node);
+			try {
+				resizeNode(node);
+				// Chroma colours animate with the clock, so the cached HUD pass would freeze them.
+				// While any chroma is on the node draws live instead, exactly like OneConfig's own
+				// text nodes do for their chroma colours.
+				node.setLive(chromaActive());
+			} catch (Throwable t) {
+				// One API call too new for the installed OneConfig: fall back to the mod's own HUD
+				// instead of breaking OneConfig's update loop.
+				drawingFailed = true;
+				markDrawingFailed();
+				if (!drawErrorLogged) {
+					drawErrorLogged = true;
+					LOGGER.warn("OneConfig HUD measurement failed, using the mod's own HUD: {}",
+						t.toString());
+				}
+			}
 		}
 
 		// OneConfig keeps the last HUD pass cached and redraws it only when it notices a change
@@ -445,9 +500,16 @@ public final class RecordingIndicatorHud extends Hud {
 
 	/** Gives the node this frame's size so OneConfig measures the HUD around the indicator. */
 	private void resizeNode(CanvasNode node) {
-		RecordingHudOverlay.Metrics metrics = currentMetrics();
-		float width = metrics == null ? 1.0f : metrics.contentWidth() + metrics.padding() * 2.0f;
-		float height = metrics == null ? 1.0f : metrics.contentHeight() + metrics.padding() * 2.0f;
+		float width;
+		float height;
+		if (isStaticValid()) {
+			width = getStaticW();
+			height = getStaticH();
+		} else {
+			Layout layout = layout();
+			width = layout.contentWidth() + getPadLeft() + getPadRight();
+			height = layout.contentHeight() + getPadTop() + getPadBottom();
+		}
 		node.getStyle().setWidth(new PolySize.Px(Math.max(1.0f, width)));
 		node.getStyle().setHeight(new PolySize.Px(Math.max(1.0f, height)));
 	}
@@ -479,11 +541,6 @@ public final class RecordingIndicatorHud extends Hud {
 	}
 
 	private void paint(RenderContext ctx, float x, float y, float width, float height) {
-		Minecraft minecraft = Minecraft.getInstance();
-		if (minecraft == null || minecraft.font == null) {
-			return;
-		}
-
 		ModConfig config = ConfigManager.get();
 		RecordState state = currentState();
 		boolean editing = HudManager.INSTANCE.isEditorOpen();
@@ -493,59 +550,328 @@ public final class RecordingIndicatorHud extends Hud {
 			return;
 		}
 
-		String label = labelFor(state);
-		RecordingHudOverlay.Metrics metrics = RecordingHudOverlay.metrics(
-			minecraft, drawCircle, drawText, config.circleRadius, label, 1.0f);
-		if (metrics.contentWidth() <= 0 || metrics.contentHeight() <= 0) {
+		Layout layout = layout();
+		if (layout.contentWidth() <= 0 || layout.contentHeight() <= 0) {
 			return;
 		}
 
-		int color = state == RecordState.PAUSED ? config.pausedColorArgb() : colorArgb();
-		float padding = metrics.padding();
-
+		// The background is OneConfig's own option and covers the whole padded box, exactly like
+		// the background of OneConfig's own text HUDs.
 		if (getShowBackground()) {
 			ctx.rect(x, y, width, height,
 				new PolyColor(getBgColor(), getBgChroma(), getBgChromaSpeed()), getBgRadius());
 		}
 
-		if (metrics.showCircle()) {
-			float radius = metrics.radius();
-			float centerX = x + padding + radius;
-			float centerY = y + padding + metrics.contentHeight() / 2.0f;
+		// The indicator sits inside the padded box; with a static size OneConfig's content
+		// alignment decides where, without one the box hugs the indicator and this is (0, 0).
+		float innerX = x + getPadLeft();
+		float innerY = y + getPadTop();
+		float innerWidth = width - getPadLeft() - getPadRight();
+		float innerHeight = height - getPadTop() - getPadBottom();
+		float contentX = innerX + alignOffsetX(innerWidth - layout.contentWidth());
+		float contentY = innerY + alignOffsetY(innerHeight - layout.contentHeight());
+
+		if (layout.showCircle()) {
+			float radius = layout.radius();
+			float centerX = contentX + radius;
+			float centerY = contentY + layout.contentHeight() / 2.0f;
 			// A rounded rect with the radius of half its width is a circle.
+			int color = state == RecordState.PAUSED ? config.pausedColorArgb() : colorArgb();
 			ctx.rect(centerX - radius, centerY - radius, radius * 2.0f, radius * 2.0f,
 				new PolyColor(color), radius);
 		}
 
-		if (!metrics.showText()) {
-			return;
+		if (layout.showText()) {
+			float textX = contentX + layout.circleBlockWidth();
+			float textY = contentY + (layout.contentHeight() - layout.textHeight()) / 2.0f;
+			// The text is OneConfig's own text colour next to the circle and takes the indicator
+			// colour when the circle is off, which is what the colour option's description
+			// promises. The paused indicator's colour has the same rule.
+			int color = state == RecordState.PAUSED ? config.pausedColorArgb() : colorArgb();
+			PolyColor textColor = layout.showCircle()
+				? new PolyColor(getTextColor(), getTextChroma(), getTextChromaSpeed())
+				: new PolyColor(color);
+			drawLabel(ctx, layout, textX, textY, textColor);
 		}
-
-		float textX = x + padding + (metrics.showCircle() ? metrics.radius() * 2.0f + metrics.gap() : 0.0f);
-		float textY = y + padding + (metrics.contentHeight() - FONT_LINE_HEIGHT) / 2.0f + 0.5f;
-		// The text is OneConfig's own text colour next to the circle and takes the indicator colour
-		// when the circle is off, which is what the colour option's description promises.
-		PolyColor textColor = metrics.showCircle()
-			? new PolyColor(getTextColor(), getTextChroma(), getTextChromaSpeed())
-			: new PolyColor(color);
-		drawText(ctx, label, textX, textY, textColor);
 	}
 
-	/** Draws {@code label} with the Minecraft font at an absolute position. */
-	private void drawText(RenderContext ctx, String label, float textX, float textY, PolyColor color) {
+	/**
+	 * Draws the label with the font, the styling and the shadow OneConfig's HUD editor describes.
+	 *
+	 * <p>The Minecraft font path goes through {@link McTextNode} — the very node OneConfig's own
+	 * {@code PolyMcText} builds — so formatting codes, the vanilla drop shadow and the outlined
+	 * full shadow behave identically. The Poppins path repeats OneConfig's own baseline, shadow
+	 * and underline maths, so both HUDs agree pixel for pixel.</p>
+	 */
+	private void drawLabel(RenderContext ctx, Layout layout, float textX, float textY, PolyColor textColor) {
+		float textScale = textScale();
+		PolyColor shadowColor = new PolyColor(getShadowColor(), getShadowChroma(), getShadowChromaSpeed());
+		boolean shadow = getShowShadow();
+		boolean full = shadow && fullShadow();
+
+		if (isPoppins()) {
+			PolyFont font = poppinsFont(POPPINS_BASE_SIZE * textScale);
+			if (font != null) {
+				drawPoppins(ctx, layout, font, textX, textY, textColor, shadow ? shadowColor : null,
+					full, getShadowOffsetX(), getShadowOffsetY(), textScale);
+				return;
+			}
+			// No skia font engine (older OneConfig): fall through to the Minecraft font.
+		}
+
 		McTextNode node = textNode;
 		if (node == null) {
 			return;
 		}
-		node.setText(label);
-		node.setColor(color);
+		node.setText(mcStyledText(layout.label()));
+		node.setColor(textColor);
 		// The vanilla glyph shadow, the same one every other OneConfig HUD with the Minecraft font
 		// draws: OneConfig's texture-font path forwards its "Text Shadow" switch to exactly this.
-		node.setShadow(getShowShadow());
-		node.setScale(1.0f);
+		// The full shadow replaces it with the outlined glyph path, as OneConfig's own text HUDs do.
+		node.setShadow(shadow && !full);
+		node.setOutlineColor(full ? shadowColor : null);
+		node.setScale(textScale);
 		node.setX(textX);
 		node.setY(textY);
 		node.render(ctx);
+	}
+
+	/**
+	 * Poppins text drawing, a Java copy of OneConfig's own {@code PoppinsTextNode.draw}.
+	 *
+	 * <p>Multi-line labels are laid out line by line with the font's own line spacing, and the
+	 * underline is drawn as a line at the font's underline position — skia fonts carry no
+	 * underline of their own.</p>
+	 */
+	private void drawPoppins(
+		RenderContext ctx,
+		Layout layout,
+		PolyFont font,
+		float x,
+		float y,
+		PolyColor color,
+		PolyColor shadowColor,
+		boolean fullShadow,
+		float shadowOffsetX,
+		float shadowOffsetY,
+		float outline
+	) {
+		PolyFont.Metrics metrics = font.getMetrics();
+		float underlinePos = metrics.getUnderlinePosition();
+		float underlineThick = metrics.getUnderlineThickness();
+		float spacing = metrics.getSpacing();
+		float ascent = metrics.getAscent();
+		List<String> lines = splitLines(layout.label());
+		for (int i = 0; i < lines.size(); i++) {
+			String line = lines.get(i);
+			if (line.isEmpty()) {
+				continue;
+			}
+			float baseline = y + i * spacing - ascent;
+			float lineW = font.measureTextWidth(line);
+			if (shadowColor != null && fullShadow) {
+				ctx.textOutline(line, x, baseline, shadowColor, font, outline);
+				if (getTextUnderline()) {
+					ctx.line(x - outline, baseline + underlinePos, x + lineW + outline,
+						baseline + underlinePos, shadowColor, underlineThick + outline * 2.0f);
+				}
+			} else if (shadowColor != null) {
+				ctx.text(line, x + shadowOffsetX, baseline + shadowOffsetY, shadowColor, font);
+				if (getTextUnderline()) {
+					ctx.line(x + shadowOffsetX, baseline + shadowOffsetY + underlinePos,
+						x + shadowOffsetX + lineW, baseline + shadowOffsetY + underlinePos,
+						shadowColor, underlineThick);
+				}
+			}
+			ctx.text(line, x, baseline, color, font);
+			if (getTextUnderline()) {
+				ctx.line(x, baseline + underlinePos, x + lineW, baseline + underlinePos, color,
+					underlineThick);
+			}
+		}
+	}
+
+	/**
+	 * Wraps the label in the formatting codes the Bold / Italic / Underline options ask for.
+	 *
+	 * <p>The same codes OneConfig's own Minecraft-font text HUD uses, so the bitmap font styling
+	 * is exactly what the HUD editor's buttons promise.</p>
+	 */
+	private String mcStyledText(String label) {
+		StringBuilder head = new StringBuilder();
+		if (getTextBold()) {
+			head.append("§l");
+		}
+		if (getTextItalic()) {
+			head.append("§o");
+		}
+		if (getTextUnderline()) {
+			head.append("§n");
+		}
+		String tail = head.length() > 0 ? "§r" : "";
+		return head + label + tail;
+	}
+
+	/** Natural geometry of the indicator's content for the current options. */
+	private Layout layout() {
+		ModConfig config = ConfigManager.get();
+		String label = labelFor(currentState());
+		float textScale = textScale();
+		boolean showText = drawText && !label.isEmpty();
+		float radius = config.circleRadius;
+
+		float textWidth = 0.0f;
+		float textHeight = 0.0f;
+		if (showText) {
+			String measured = isPoppins() ? label : mcStyledText(label);
+			List<String> lines = splitLines(measured);
+			if (isPoppins()) {
+				PolyFont font = poppinsFont(POPPINS_BASE_SIZE * textScale);
+				if (font != null) {
+					PolyFont.Metrics metrics = font.getMetrics();
+					for (String line : lines) {
+						textWidth = Math.max(textWidth, font.measureTextWidth(line));
+					}
+					textHeight = (lines.size() - 1) * metrics.getSpacing()
+						+ (metrics.getDescent() - metrics.getAscent());
+				} else {
+					showText = false;
+				}
+			} else {
+				// Measured line by line, exactly like McTextNode does, so the box matches what
+				// the node draws.
+				for (String line : lines) {
+					textWidth = Math.max(textWidth,
+						McFontQueue.INSTANCE.measureTextWidth(line, textScale));
+				}
+				textHeight = McFontQueue.INSTANCE.measureBlockHeight(lines.size(), textScale);
+			}
+		}
+
+		float circleBlock = drawCircle
+			? radius * 2.0f + (showText ? CIRCLE_TEXT_GAP : 0.0f)
+			: 0.0f;
+		float contentWidth = circleBlock + (showText ? textWidth : 0.0f);
+		float contentHeight = Math.max(drawCircle ? radius * 2.0f : 0.0f, showText ? textHeight : 0.0f);
+		return new Layout(drawCircle, showText, label, contentWidth, contentHeight,
+			textWidth, textHeight, radius, circleBlock);
+	}
+
+	/** Whether this instance draws with OneConfig's Poppins font rather than the Minecraft font. */
+	private boolean isPoppins() {
+		return getFont() == Font.Poppins;
+	}
+
+	/**
+	 * The Poppins font of this instance, or {@code null} when the skia font engine is missing.
+	 *
+	 * <p>OneConfig's own text HUDs render Poppins at {@code 8 * textScale} and pick the variant
+	 * from the Bold / Italic / Weight options through {@code getPoppinsFontName()}; the font is
+	 * cached because it caches its metrics per font instance.</p>
+	 */
+	private PolyFont poppinsFont(float size) {
+		String key = getPoppinsFontName() + "@" + size;
+		if (poppinsFont != null && key.equals(poppinsFontKey)) {
+			return poppinsFont;
+		}
+		try {
+			PolyFont font = new PolyFont(getPoppinsFontName(), size);
+			// Touch the metrics so a missing font engine is noticed here and falls back to the
+			// Minecraft font instead of failing on every frame.
+			font.getMetrics();
+			poppinsFont = font;
+			poppinsFontKey = key;
+			return font;
+		} catch (Throwable t) {
+			poppinsFont = null;
+			poppinsFontKey = null;
+			return null;
+		}
+	}
+
+	/** The label with the case option applied: 1 = upper case, 2 = lower case. */
+	private String casedLabel(String label) {
+		int caseType = getCaseType();
+		if (caseType == 1) {
+			return label.toUpperCase(Locale.ROOT);
+		}
+		if (caseType == 2) {
+			return label.toLowerCase(Locale.ROOT);
+		}
+		return label;
+	}
+
+	private static List<String> splitLines(String text) {
+		List<String> lines = new ArrayList<>();
+		int start = 0;
+		for (int i = 0; i < text.length(); i++) {
+			if (text.charAt(i) == '\n') {
+				lines.add(text.substring(start, i));
+				start = i + 1;
+			}
+		}
+		lines.add(text.substring(start));
+		return lines;
+	}
+
+	private float textScale() {
+		float scale = getTextScale();
+		return scale > 0.0f ? scale : 1.0f;
+	}
+
+	/**
+	 * Whether OneConfig's "Full Shadow" option is on.
+	 *
+	 * <p>Reached reflectively because {@code Hud.getFullShadow()} only exists since OneConfig 1.5;
+	 * on older versions the indicator keeps the plain drop shadow instead of failing to draw.</p>
+	 */
+	private boolean fullShadow() {
+		if (fullShadowSupported == null) {
+			try {
+				Hud.class.getMethod("getFullShadow");
+				fullShadowSupported = true;
+			} catch (Throwable t) {
+				fullShadowSupported = false;
+			}
+		}
+		if (!fullShadowSupported) {
+			return false;
+		}
+		return getFullShadow();
+	}
+
+	/** Whether any colour of this HUD animates with the chroma cycle. */
+	private boolean chromaActive() {
+		return getBgChroma() || getTextChroma() || getShadowChroma();
+	}
+
+	/** Horizontal content offset for the alignment picker; {@code slack} is the spare box width. */
+	private float alignOffsetX(float slack) {
+		PolyAlign align = getAlignment();
+		if (align == PolyAlign.Top || align == PolyAlign.Center || align == PolyAlign.Bottom) {
+			return slack / 2.0f;
+		}
+		if (align == PolyAlign.TopRight || align == PolyAlign.Right || align == PolyAlign.BottomRight) {
+			return slack;
+		}
+		return 0.0f;
+	}
+
+	/** Vertical content offset for the alignment picker; {@code slack} is the spare box height. */
+	private float alignOffsetY(float slack) {
+		PolyAlign align = getAlignment();
+		if (align == PolyAlign.Left || align == PolyAlign.Center || align == PolyAlign.Right) {
+			return slack / 2.0f;
+		}
+		if (align == PolyAlign.BottomLeft || align == PolyAlign.Bottom || align == PolyAlign.BottomRight) {
+			return slack;
+		}
+		return 0.0f;
+	}
+
+	/** Whether the static size options give this HUD a fixed box. */
+	private boolean isStaticValid() {
+		return getStaticWidth() && getStaticW() > 0.0f && getStaticH() > 0.0f;
 	}
 
 	/**
@@ -611,9 +937,13 @@ public final class RecordingIndicatorHud extends Hud {
 			screenHeight = minecraft.getWindow().getGuiScaledHeight();
 		}
 
-		RecordingHudOverlay.Metrics metrics = currentMetrics();
-		float padding = metrics == null ? 3.0f : metrics.padding();
-		float boxHeight = metrics == null ? 0.0f : metrics.contentHeight() + padding * 2.0f;
+		float padding = getPadLeft();
+		float boxHeight;
+		try {
+			boxHeight = layout().contentHeight() + getPadTop() + getPadBottom();
+		} catch (Throwable t) {
+			boxHeight = 13.0f;
+		}
 
 		// ModConfig stores the content origin; the HUD box starts one padding earlier.
 		float x = screenWidth / 2.0f + config.positionX - padding;
@@ -637,8 +967,10 @@ public final class RecordingIndicatorHud extends Hud {
 		if (minecraft == null || minecraft.getWindow() == null) {
 			return;
 		}
-		RecordingHudOverlay.Metrics metrics = currentMetrics();
-		if (metrics == null) {
+		float contentHeight;
+		try {
+			contentHeight = layout().contentHeight();
+		} catch (Throwable t) {
 			return;
 		}
 
@@ -648,9 +980,9 @@ public final class RecordingIndicatorHud extends Hud {
 
 		// Translate the dropped HUD box back into ModConfig's screen-centre origin so the position
 		// survives removing OneConfig later.
-		float contentLeft = getX() + metrics.padding() * scale;
-		float contentTop = getY() + metrics.padding() * scale;
-		float contentHeight = metrics.contentHeight() * scale;
+		float contentLeft = getX() + getPadLeft() * scale;
+		float contentTop = getY() + getPadTop() * scale;
+		contentHeight = contentHeight * scale;
 
 		ModConfig config = ConfigManager.get();
 		config.positionX = Math.round(contentLeft - screenWidth / 2.0f);
@@ -665,6 +997,8 @@ public final class RecordingIndicatorHud extends Hud {
 			// Each copy draws through its own node; the root they hang off is per instance too.
 			indicator.canvasNode = null;
 			indicator.textNode = null;
+			indicator.poppinsFont = null;
+			indicator.poppinsFontKey = null;
 		}
 		return copy;
 	}
@@ -710,9 +1044,9 @@ public final class RecordingIndicatorHud extends Hud {
 	 * Hash of every value {@link #paint} and the node measurement use that OneConfig does not
 	 * observe as Compose state.
 	 *
-	 * <p>Compose-backed options (background, colours, chroma, shadow) are read by the draw pass
-	 * and are observed by OneConfig already; they are included here as well so the indicator is
-	 * also redrawn when they change outside the draw pass.</p>
+	 * <p>Compose-backed options (font, text style, background, colours, chroma, shadow) are read by
+	 * the draw pass and are observed by OneConfig already; the mod's own plain fields and the
+	 * recording state are included here so the indicator is redrawn when they change.</p>
 	 */
 	private int visualHash() {
 		ModConfig config = ConfigManager.get();
@@ -726,15 +1060,6 @@ public final class RecordingIndicatorHud extends Hud {
 		h = 31 * h + colorArgb();
 		h = 31 * h + config.pausedColorArgb();
 		h = 31 * h + Float.floatToIntBits(config.circleRadius);
-		h = 31 * h + (getShowBackground() ? 1 : 0);
-		h = 31 * h + getBgColor();
-		h = 31 * h + (getBgChroma() ? 1 : 0);
-		h = 31 * h + Float.floatToIntBits(getBgChromaSpeed());
-		h = 31 * h + Float.floatToIntBits(getBgRadius());
-		h = 31 * h + getTextColor();
-		h = 31 * h + (getTextChroma() ? 1 : 0);
-		h = 31 * h + Float.floatToIntBits(getTextChromaSpeed());
-		h = 31 * h + (getShowShadow() ? 1 : 0);
 		return h;
 	}
 
@@ -746,22 +1071,26 @@ public final class RecordingIndicatorHud extends Hud {
 		return String.format("#%06X", argb & 0x00FFFFFF);
 	}
 
-	private RecordingHudOverlay.Metrics currentMetrics() {
-		Minecraft minecraft = Minecraft.getInstance();
-		if (minecraft == null || minecraft.font == null) {
-			return null;
-		}
-		ModConfig config = ConfigManager.get();
-		return RecordingHudOverlay.metrics(
-			minecraft, drawCircle, drawText, config.circleRadius, labelFor(currentState()), 1.0f);
-	}
-
 	private static RecordState currentState() {
 		var client = ObsRecIndicatorClient.obsClient();
 		return client == null ? RecordState.IDLE : client.currentRecordState();
 	}
 
 	private String labelFor(RecordState state) {
-		return state == RecordState.PAUSED ? currentPausedText() : currentRecordingText();
+		return casedLabel(state == RecordState.PAUSED ? currentPausedText() : currentRecordingText());
+	}
+
+	/** Natural content geometry of the indicator for the current options. */
+	private record Layout(
+		boolean showCircle,
+		boolean showText,
+		String label,
+		float contentWidth,
+		float contentHeight,
+		float textWidth,
+		float textHeight,
+		float radius,
+		float circleBlockWidth
+	) {
 	}
 }
